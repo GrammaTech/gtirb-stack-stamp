@@ -15,7 +15,7 @@ defeat than if we selected the same value for the entire binary.
 On function entry, rsp points to the return address, so the indirect access
 [rsp] will access the return address.  We want to encode all 8 bytes of the
 return address, but there is no 64-bit immediate version of xor, so we will do
-it with two intructions, 4 bytes each.  Since XOR is symetric, the same
+it with two instructions, 4 bytes each.  Since XOR is symetric, the same
 instructions will decode the return address on exit.
 
   xorl 00112233, [rsp-8]
@@ -24,7 +24,7 @@ instructions will decode the return address on exit.
 When changing instructions (including adding or removing) one must be careful to
 consider if flags or registers are live and if they will be affected by your
 changes.  In our case flags will be affected, but the ABI (application binary
-interface) states that flags are not preserved accross function calls so this
+interface) states that flags are not preserved across function calls so this
 should not be a problem.  We are not using any registers so that should be fine
 as well.
 
