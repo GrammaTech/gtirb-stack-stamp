@@ -15,7 +15,7 @@ defeat than if we selected the same value for the entire binary.
 On function entry, rsp points to the return address, so the indirect access
 [rsp] will access the return address.  We want to encode all 8 bytes of the
 return address, but there is no 64-bit immediate version of xor, so we will do
-it with two instructions, 4 bytes each.  Since XOR is symetric, the same
+it with two instructions, 4 bytes each.  Since XOR is symmetric, the same
 instructions will decode the return address on exit.
 
   xorl 00112233, [rsp-8]
@@ -43,11 +43,39 @@ before the jump.
 
 ## Identify function blocks (1)
 
+This first part is done for us.  GTIRB contains an auxdata table that lists the
+basic blocks that encompass each function, along with the entry block for each.
+
+TDB - call out auxdata names
+
 ## Identify entry/exit blocks (2)
+
+As mentioned in the previous section, the entry block for each function is
+identified for us already in TBD.
+
+The exit blocks can be identified by looking at the cfg edges.  Any block that
+has an edge with a target block that is not within the set of blocks
+encompassing this function, is likely an exit block.
 
 ## Insert entry instructions (3)
 
+Entry instructions should be placed immediately on entry, i.e. before all
+instructions in the entry block for the function.
+
+GTIRB only includes the raw bytes for each basic block with no instruction
+semantics or mnemonics.  To insert new instructions, we modify the byte sequence
+of the basic block.  For entry we don't care and can just insert the new
+instruction bytes before the existing bytes.
+
+We do this using the Keystone assembler package.  Given instructions in string
+form, it will give us a sequence of assembled bytes we can insert in the block.
+
 ## Insert exit instructions (4)
 
-
+Exit instructions need to be placed immediately before the last instruction of
+each entry block.  To identify the last instruction we can use the Capstone
+disassembler package.  Given the bytes in a basic block we can disassemble the
+block, identify the last instruction to confirm it is what we expect, and see
+how many bytes it is so we know where to insert our new bytes.  Again we'll do
+so using the Keystone assembler.
 
