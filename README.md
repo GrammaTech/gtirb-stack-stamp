@@ -79,3 +79,17 @@ block, identify the last instruction to confirm it is what we expect, and see
 how many bytes it is so we know where to insert our new bytes.  Again we'll do
 so using the Keystone assembler.
 
+# Getting started
+
+To start, make sure gtirb, keystone, and capstone are installed in python.
+
+```
+pip3 install keystone-engine capstone TBD-GTIRB
+
+git clone https://github.com/keystone-engine/keystone.git
+cd keystone
+mkdir build
+cd build
+../make-share.sh
+make install
+```
