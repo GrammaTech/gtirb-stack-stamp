@@ -6,6 +6,7 @@ from capstone import *
 import gtirb
 from gtirb import *
 from keystone import *
+import subprocess
 
 def progress(msg, **kwargs):
     if sys.stdout.isatty():
@@ -15,6 +16,7 @@ def progress(msg, **kwargs):
 ap = argparse.ArgumentParser(description="Show (un)reachable code in GTIRB")
 ap.add_argument("infile")
 ap.add_argument("-o", "--outfile", default=None, help="Specification output")
+ap.add_argument("--rebuild", default=None, help="rebuild binary as NAME")
 ap.add_argument(
     "-q",
     "--quiet",
@@ -45,8 +47,10 @@ class Function(object):
         names = [ s.name for s in self._name_symbols ]
         if len(names) == 1:
             return names[0]
-        else:
+        elif len(names) > 2:
             return "{} (a.k.a. {}".format(names[0], ",".join(names[1:]))
+        else:
+            return "<unknown>"
 
     def get_entry_blocks(self):
         return self._entryBlocks
@@ -80,8 +84,6 @@ def build_functions(module):
         for b in blocks:
             if isinstance(b, DataBlock):
                 print(b.outgoing_edges)
-            # for e in b.outgoing_edges:
-            #     print(e)
         exit_blocks = None
         functions.append(
                 Function( uuid,
@@ -91,35 +93,35 @@ def build_functions(module):
     return functions
 
 def show_block_asm(block):
-    # print(dir(block))
-    # print(block.offset)
-    # print(block.size)
     bytes = block.byte_interval.contents[block.offset:block.offset+block.size]
-    # print(bytes)
-    # print(bytes[block.offset:block.size])
-    for i in md.disasm(bytes, 0x1000):
+    for i in md.disasm(bytes, block.byte_interval.address+block.offset):
         print("0x%x:\t%s\t%s" %(i.address, i.mnemonic, i.op_str))
-    print(block.byte_interval.symbolic_expressions)
 
 def stamp_it(module, func):
     print('Stamping function: %s'%func.get_name())
     encoding, count = ks.asm(b"xorl $0x26344873,(%rsp);"+
                              b"xorl $0x899322a4,4(%rsp);")
 
+    if len(func.get_exit_blocks()) == 0:
+        print("* No function returns, skipping")
+        return
+
+    print('* Entries')
     for b in func.get_entry_blocks():
         bytes = b.byte_interval.contents[b.offset:b.offset+b.size]
         new_bytes = bytearray(encoding) + bytes
-        modify_block_insert(module, b, encoding, 0)
+        modify_block_insert(module, b, encoding, 0, debug=True)
 
-    # for b in func.get_exit_blocks():
-    #     bytes = b.byte_interval.contents[b.offset:b.offset+b.size]
-    #     offset = 0
-    #     for i in md.disasm(bytes, 0):
-    #         if i.mnemonic == 'ret':
-    #             modify_block_insert(module, b, encoding, offset)
-    #             break
-    #         else:
-    #             offset += i.size
+    print('* Exits')
+    for b in func.get_exit_blocks():
+        bytes = b.byte_interval.contents[b.offset:b.offset+b.size]
+        offset = 0
+        for i in md.disasm(bytes, 0):
+            if i.mnemonic == 'ret':
+                modify_block_insert(module, b, encoding, offset, debug=True)
+                break
+            else:
+                offset += i.size
 
 def modify_block_insert(module, block, new_bytes, offset, debug=False):
     if debug:
@@ -173,22 +175,32 @@ def isolate_byte_interval(module, block):
 # start modifying byte_intervals
 def prepare_for_rewriting(ir):
     for m in ir.modules:
-        for s in m.sections:
-            print(s.name + ' ' + str(s.address) + ' ' + str(s.size))
         code_blocks = [b for b in m.code_blocks]
         for b in code_blocks:
             if b.offset != 0 or b.size != b.byte_interval.size:
                 isolate_byte_interval(m, b)
+    m.aux_data.pop('cfiDirectives')
 
+progress('Preparing IR for rewriting...')
 prepare_for_rewriting(ir)
+progress('Stamping functions...')
 for m in ir.modules:
     functions = build_functions(m)
     for f in functions:
         # if f.get_name()=="main":
         stamp_it(m, f)
+progress('Saving new IR...')
 ir.save_protobuf(args.outfile)
+progress('Done.')
 
-
+if args.rebuild is not None:
+    args_pp = ['gtirb-pprinter', args.outfile, '-a', args.rebuild+'.s',
+            '--skip-section', '.eh_frame']
+    args_build = ['gcc', args.rebuild+'.s', '-o', args.rebuild]
+    progress("Pretty printing...")
+    subprocess.call(args_pp)
+    progress("Rebuilding...")
+    subprocess.call(args_build)
 
 def test_keystone():
     try:
