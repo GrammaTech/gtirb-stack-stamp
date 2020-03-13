@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+/.vscode/
+.mypy_cache/
+/gtirb_stack_stamp.egg-info/
