@@ -93,3 +93,15 @@ cd build
 ../make-share.sh
 make install
 ```
+
+## Rewriting steps
+
+gtirb-pprinter:jrobbins/use-symbol-type
+ddisasm:jrobbins/use-symbol-type
+
+  1. Build IR
+    `ddisasm factorial -i factorial.gtirb`
+  2. Stack stamp it
+    `python3 stack_stamp.py factorial.gtirb -o factorial.stamp.gtirb`
+  3. Rebuild it
+    `gtirb-binary-printer factorial.stamp.gtirb -b factorial.stamp -c -no-pie`

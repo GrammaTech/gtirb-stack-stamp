@@ -21,8 +21,6 @@ if __name__ == "__main__":
         install_requires=["gtirb", "pyyaml"],
         classifiers=["Programming Language :: Python :: 3"],
         entry_points={
-            "console_scripts": [
-                "stack-stamp = stack_stamp.__main__:main"
-            ]
+            "console_scripts": ["stack-stamp = stack_stamp.__main__:main"]
         },
     )
