@@ -1,0 +1,10 @@
+FROM docker.grammatech.com/rewriting/gtirb/ubuntu18-gcc7
+
+WORKDIR /gt/gtirb/build/python
+RUN python3 setup.py develop
+
+COPY . /gt/gtirb-stack-stamp/
+WORKDIR /gt/gtirb-stack-stamp/
+
+RUN rm -rf gtirb_stack_stamp.egg-info
+RUN python3 setup.py develop

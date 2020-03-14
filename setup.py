@@ -20,4 +20,9 @@ if __name__ == "__main__":
         test_suite="setup.gtirb_stack_stamp_test_suite",
         install_requires=["gtirb", "pyyaml"],
         classifiers=["Programming Language :: Python :: 3"],
+        entry_points={
+            "console_scripts": [
+                "stack-stamp = stack_stamp.__main__:main"
+            ]
+        },
     )

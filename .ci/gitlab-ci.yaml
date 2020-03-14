@@ -1,0 +1,46 @@
+variables:
+  DOCKER_REGISTRY: "docker.grammatech.com"
+  LOCAL_IMAGE_NAME: '$CI_BUILD_REF_NAME-$CI_PIPELINE_ID'
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - check-format
+  - build
+  - test
+  - cleanup
+
+check-format:
+  stage: check-format
+  script:
+    - docker build --rm -f .ci/Dockerfile.formatter .
+
+build:
+  stage: build
+  script:
+    - if [ "$CI_COMMIT_REF_SLUG" = "master" ];
+      then
+          PUSH_TAG=latest;
+      else
+          PUSH_TAG=$CI_COMMIT_REF_SLUG;
+      fi
+    - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
+    - docker pull ${DOCKER_REGISTRY}/rewriting/gtirb/ubuntu18-gcc7
+    - docker build -f .ci/Dockerfile.build -t ${LOCAL_IMAGE_BASE} .
+    - export IMAGE_NAME=${DOCKER_REGISTRY}/${CI_PROJECT_PATH}:${PUSH_TAG}
+    - docker tag ${LOCAL_IMAGE_BASE} ${IMAGE_NAME}
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
+    - docker push ${IMAGE_NAME}
+
+test:
+  stage: test
+  script:
+    - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
+    - docker run ${LOCAL_IMAGE_BASE} bash -c 'python3 setup.py test'
+
+cleanup:
+  stage: cleanup
+  script:
+    - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
+    - docker rmi -f ${LOCAL_IMAGE_BASE}
+  when: always
