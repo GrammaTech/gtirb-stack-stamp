@@ -37,29 +37,28 @@ another case that need to be considered.  Tail calls are cases where a function
 exits by jumping to another function, rather than returning or calling.  This
 needs special attention, since a jmp instruction does not always indicate an
 function boundary, but if it does, we would need to decode the return address
-before the jump.
+before the jump.  We will opt to skip functions that do not have clear 'return'
+exits to avoid this case.
 
   1. Identify basic blocks that encompass a function
   2. Identify entry and exit basic blocks for each function
   3. Insert encoding instructions at the start of each entry block
-  4. Insert decoding instructions in each exit block, just before the return or
-      jump instruction.
+  4. Insert decoding instructions in each exit block, just before the return
 
 ## Identify function blocks (1)
 
 This first part is done for us.  GTIRB contains an auxdata table that lists the
 basic blocks that encompass each function, along with the entry block for each.
 
-TDB - call out auxdata names
-
 ## Identify entry/exit blocks (2)
 
 As mentioned in the previous section, the entry block for each function is
-identified for us already in TBD.
+identified for us already in the GTIRB auxdata table.
 
 The exit blocks can be identified by looking at the cfg edges.  Any block that
 has an edge with a target block that is not within the set of blocks
-encompassing this function, is likely an exit block.
+encompassing this function, is likely an exit block.  We further confirm the
+exit edge type is a 'return' type edge.
 
 ## Insert entry instructions (3)
 
@@ -77,7 +76,7 @@ form, it will give us a sequence of assembled bytes we can insert in the block.
 ## Insert exit instructions (4)
 
 Exit instructions need to be placed immediately before the last instruction of
-each entry block.  To identify the last instruction we can use the Capstone
+each exit block.  To identify the last instruction we can use the Capstone
 disassembler package.  Given the bytes in a basic block we can disassemble the
 block, identify the last instruction to confirm it is what we expect, and see
 how many bytes it is so we know where to insert our new bytes.  Again we'll do
@@ -105,16 +104,20 @@ ddisasm:jrobbins/use-symbol-type
 
   1. Build IR
     `ddisasm factorial -i factorial.gtirb`
-  2. Stack stamp it
+  2. Break up byte intervals so each code block has its own byte interval
+  3. Remove CFI information (ONLY for stack stamp, or other transformations that
+     modify stack unwinding.)
+  4. Stack stamp it
     `python3 stack_stamp.py factorial.gtirb -o factorial.stamp.gtirb`
-  3. Rebuild it
+  5. Rebuild it
     `gtirb-binary-printer factorial.stamp.gtirb -b factorial.stamp -c -no-pie`
 
 
+# Notes
 
 An ROP (Return Oriented Programming) attack is one that replaces an existing
 return address on the stack with a different address, causing the process to be
-redirected to code that was not intended.  
+redirected to code that was not intended.
 
 Any symetrical combination of encoding instructions, may be used (add/sub, bit
 rotation, xor, etc).  We chose xor for it's simplicity.  The value to xor can be
