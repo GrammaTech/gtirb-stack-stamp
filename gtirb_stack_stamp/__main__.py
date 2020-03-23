@@ -45,20 +45,14 @@ def main():
     logger.info("Done.")
 
     if args.rebuild is not None:
-        args_pp = [
-            "gtirb-pprinter",
-            args.outfile,
-            "-a",
-            args.rebuild + ".s",
-            "--skip-section",
-            ".eh_frame",
-        ]
-        args_build = ["gcc", args.rebuild + ".s", "-o", args.rebuild]
         logger.info("Pretty printing...")
+        args_pp = [
+            "gtirb-binary-printer",
+            args.outfile,
+            "--skip-section", ".eh_frame",
+            "-b", args.rebuild,
+        ]
         subprocess.call(args_pp)
-        logger.info("Rebuilding...")
-        subprocess.call(args_build)
-
 
 if __name__ == "__main__":
     main()
