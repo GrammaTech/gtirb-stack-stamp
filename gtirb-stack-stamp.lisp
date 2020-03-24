@@ -10,7 +10,7 @@
 ;;; endorsement should be inferred.
 (defpackage :gtirb-stack-stamp/gtirb-stack-stamp
   (:nicknames :gtirb-stack-stamp)
-  (:use :gt :gtirb :capstone/clos :keystone/clos :stefil)
+  (:use :gt :gtirb :gtirb/functions :capstone/clos :keystone/clos :stefil)
   (:import-from :cl-intbytes :int->octets :octets->uint)
   (:shadow :version :size :architecture :mode :symbol :address :bytes)
   (:export :gtirb-stack-stamp))
