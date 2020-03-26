@@ -5,3 +5,5 @@ __pycache__/
 /gtirb_stack_stamp.egg-info/
 
 *.fasl
+
+*.pdf
