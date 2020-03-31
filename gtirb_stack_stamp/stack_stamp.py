@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-from gtirb import *
 import random
 import logging
 from .rewriting import Function, RewritingContext
@@ -40,8 +39,6 @@ def stamp_function(module, func, ctx, logger=logging.Logger("null")):
 
     logger.debug("- Entry blocks")
     for b in func.get_entry_blocks():
-        bytes = b.byte_interval.contents[b.offset : b.offset + b.size]
-        new_bytes = bytearray(encoding) + bytes
         ctx.modify_block_insert(module, b, encoding, 0, logger=logger)
 
     logger.debug("- Exit blocks")

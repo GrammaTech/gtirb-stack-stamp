@@ -49,10 +49,13 @@ def main():
         args_pp = [
             "gtirb-binary-printer",
             args.outfile,
-            "--skip-section", ".eh_frame",
-            "-b", args.rebuild,
+            "--skip-section",
+            ".eh_frame",
+            "-b",
+            args.rebuild,
         ]
         subprocess.call(args_pp)
+
 
 if __name__ == "__main__":
     main()
