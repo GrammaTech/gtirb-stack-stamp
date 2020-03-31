@@ -1,4 +1,5 @@
-from gtirb import *
+from gtirb import Edge
+
 
 class Function(object):
     def __init__(self, uuid, entryBlocks=None, blocks=None, name_symbols=None):
@@ -24,7 +25,6 @@ class Function(object):
                     module.symbols,
                 )
             ]
-            exit_blocks = None
             functions.append(
                 Function(
                     uuid,
@@ -65,4 +65,3 @@ class Function(object):
         return "[UUID={}, Name={}, Entry={}, Blocks={}]".format(
             self._uuid, self.get_name(), self._entryBlocks, self._blocks
         )
-
