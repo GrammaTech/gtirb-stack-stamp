@@ -11,7 +11,7 @@ def gtirb_stack_stamp_test_suite():
 if __name__ == "__main__":
     setup(
         name="gtirb-stack-stamp",
-        version="0.0.0",
+        version="0.1.0",
         author="blevine",
         author_email="blevine@grammatech.com",
         description="Apply a stack-stamp transform to GTIRB",
