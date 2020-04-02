@@ -12,7 +12,7 @@
   (:nicknames :gtirb-stack-stamp)
   (:use :gt :gtirb :gtirb-functions :gtirb-capstone :stefil)
   (:import-from :cl-intbytes :int->octets :octets->uint)
-  (:shadow :version :size :architecture :mode :symbol :address :bytes)
+  (:shadow :version :size :architecture :mode :symbol :address)
   (:export :gtirb-stack-stamp))
 (in-package :gtirb-stack-stamp/gtirb-stack-stamp)
 (in-readtable :curry-compose-reader-macros)
@@ -44,14 +44,17 @@
             (entries obj))
       (mapc (lambda (return-block)
               (let ((bytes (gtirb:bytes return-block)))
-                (if-let ((return-position (position-if [{eql :ret} #'mnemonic]
-                                                       (disasm *cs* bytes))))
+                (if-let ((return-position
+                          (position-if [{eql :ret} #'mnemonic]
+                                       (disasm return-block bytes))))
                   (setf (gtirb:bytes return-block)
                         (concatenate 'vector
                                      (subseq bytes 0 return-position)
                                      stamp-bytes
                                      (subseq bytes return-position))))))
             (returns obj)))))
+
+(defmethod stack-stamp :around ((obj gtirb-node)) (call-next-method) obj)
 
 
 ;;;; Main test suite.
@@ -72,5 +75,6 @@
   (:teardown (setf *hello* nil)))
 
 (deftest stack-stamp-hello ()
-  (with-fixture hello
-    (stack-stamp *hello*)))
+  (nest
+   (with-fixture hello)
+   (is (typep (stack-stamp *hello*) 'gtirb))))
