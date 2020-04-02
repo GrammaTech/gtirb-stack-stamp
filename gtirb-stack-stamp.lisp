@@ -13,6 +13,7 @@
   (:use :gt :gtirb :gtirb-functions :gtirb-capstone :stefil)
   (:shadowing-import-from :gt :size)
   (:import-from :cl-intbytes :int->octets :octets->uint)
+  (:import-from :asdf/system :system-relative-pathname)
   (:shadow :version :architecture :mode :symbol :address)
   (:export :gtirb-stack-stamp))
 (in-package :gtirb-stack-stamp/gtirb-stack-stamp)
@@ -39,17 +40,13 @@
                                               xorl $0x~x,4(%rsp);"
                                          (octets->uint (subseq key 0 4) 4)
                                          (octets->uint (subseq key 4) 4)))))
-      (mapc (lambda (entry-block)
-              (setf (gtirb:bytes entry-block 0 0) stamp-bytes))
+      (mapc (lambda (entry-block) (setf (bytes entry-block 0 0) stamp-bytes))
             (entries obj))
       (mapc
-       (lambda (return-block)
-         (let ((bytes (gtirb:bytes return-block)))
-           (if-let ((return-position
-                     (position-if [{eql :ret} #'mnemonic]
-                                  (disasm return-block bytes))))
-             (setf (gtirb:bytes return-block return-position return-position)
-                   stamp-bytes))))
+       (lambda (ret-block)
+         (if-let ((ret-position (position-if [{eql :ret} #'mnemonic]
+                                             (instructions ret-block))))
+           (setf (bytes ret-block ret-position ret-position) stamp-bytes)))
        (returns obj)))))
 
 (defmethod stack-stamp :around ((obj gtirb-node)) (call-next-method) obj)
@@ -61,15 +58,10 @@
 
 (defvar *hello*)
 
-(defvar *base-dir* (nest (make-pathname :directory)
-                         (pathname-directory)
-                         #.(or *compile-file-truename*
-                               *load-truename*
-                               *default-pathname-defaults*)))
-
 (defixture hello
-  (:setup (setf *hello* (read-gtirb (merge-pathnames "tests/hello.v1.gtirb"
-                                                     *base-dir*))))
+  (:setup (setf *hello* (read-gtirb
+                         (system-relative-pathname "gtirb-stack-stamp"
+                                                   "tests/hello.v1.gtirb"))))
   (:teardown (setf *hello* nil)))
 
 (deftest stack-stamp-hello ()
