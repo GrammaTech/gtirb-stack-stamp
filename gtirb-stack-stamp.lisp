@@ -11,11 +11,13 @@
 (defpackage :gtirb-stack-stamp/gtirb-stack-stamp
   (:nicknames :gtirb-stack-stamp)
   (:use :gt :gtirb :gtirb-functions :gtirb-capstone :stefil)
+  (:shadowing-import-from :gt :size)
   (:import-from :cl-intbytes :int->octets :octets->uint)
-  (:shadow :version :size :architecture :mode :symbol :address)
+  (:shadow :version :architecture :mode :symbol :address)
   (:export :gtirb-stack-stamp))
 (in-package :gtirb-stack-stamp/gtirb-stack-stamp)
 (in-readtable :curry-compose-reader-macros)
+(defmethod size ((obj gtirb-node)) (gtirb:size obj))
 
 
 ;;; Implementation
@@ -38,21 +40,17 @@
                                          (octets->uint (subseq key 0 4) 4)
                                          (octets->uint (subseq key 4) 4)))))
       (mapc (lambda (entry-block)
-              (setf (gtirb:bytes entry-block)
-                    (concatenate 'vector
-                                 stamp-bytes (gtirb:bytes entry-block))))
+              (setf (gtirb:bytes entry-block 0 0) stamp-bytes))
             (entries obj))
-      (mapc (lambda (return-block)
-              (let ((bytes (gtirb:bytes return-block)))
-                (if-let ((return-position
-                          (position-if [{eql :ret} #'mnemonic]
-                                       (disasm return-block bytes))))
-                  (setf (gtirb:bytes return-block)
-                        (concatenate 'vector
-                                     (subseq bytes 0 return-position)
-                                     stamp-bytes
-                                     (subseq bytes return-position))))))
-            (returns obj)))))
+      (mapc
+       (lambda (return-block)
+         (let ((bytes (gtirb:bytes return-block)))
+           (if-let ((return-position
+                     (position-if [{eql :ret} #'mnemonic]
+                                  (disasm return-block bytes))))
+             (setf (gtirb:bytes return-block return-position return-position)
+                   stamp-bytes))))
+       (returns obj)))))
 
 (defmethod stack-stamp :around ((obj gtirb-node)) (call-next-method) obj)
 
@@ -81,16 +79,30 @@
             (nest (mappend [#'hash-table-values #'symbolic-expressions])
                   (mappend #'byte-intervals) (mappend #'sections)
                   (modules it)))
+          (interval-bytes (it)
+            (nest (apply #'concatenate 'vector)
+                  (mapcar #'bytes)
+                  (mappend #'byte-intervals) (mappend #'sections)
+                  (modules it)))
           (block-bytes (it)
-            (nest (mapcar #'bytes) (mappend #'blocks)
+            (nest (apply #'concatenate 'vector)
+                  (mapcar #'bytes) (mappend #'blocks)
                   (mappend #'byte-intervals) (mappend #'sections)
                   (modules it)))))
-   (let ((original (copy *hello*)))
+   (let ((original-symbolic-expressions (symbolic-expressions *hello*))
+         (original-interval-bytes (interval-bytes *hello*))
+         (original-bytes (block-bytes *hello*)))
      (is (typep (stack-stamp *hello*) 'gtirb))
-     (is (set-equal (symbolic-expressions original)
-                    (symbolic-expressions *hello*)))
-     (is (not (set-equal (block-bytes original)
-                         (block-bytes *hello*)
-                         :test #'equalp)))
-     (is (< (length (apply #'concatenate 'vector (block-bytes original)))
-            (length (apply #'concatenate 'vector (block-bytes *hello*))))))))
+     (let ((new-symbolic-expressions (symbolic-expressions *hello*)))
+       ;; Should not have fewer symbolic expressions when we're only
+       ;; inserting (not removing) instructions (and therefore bytes).
+       (is (= (length original-symbolic-expressions)
+              (length new-symbolic-expressions)))
+       ;; In fact we should have exactly the same instructions.
+       (is (= (length original-symbolic-expressions)
+              (length new-symbolic-expressions))))
+     (let ((new-bytes (block-bytes *hello*)))
+       ;; We should have more bytes (with the new stamping instructions).
+       (is (< (length original-interval-bytes)
+              (length (interval-bytes *hello*))))
+       (is (< (length original-bytes) (length new-bytes)))))))
