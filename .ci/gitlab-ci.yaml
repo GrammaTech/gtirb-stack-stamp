@@ -66,36 +66,11 @@ test_package:
   script:
     - python3 -m pip install "*.whl"
 
-
-    # - if [ "$CI_COMMIT_REF_SLUG" = "master" ];
-    #   then
-    #       PUSH_TAG=latest;
-    #   else
-    #       PUSH_TAG=$CI_COMMIT_REF_SLUG;
-    #   fi
-    # - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
-    # - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
-    # - docker pull ${DOCKER_REGISTRY}/rewriting/gtirb/ubuntu18-gcc7
-    # - docker build -f .ci/Dockerfile.build -t ${LOCAL_IMAGE_BASE} .
-    # - export IMAGE_NAME=${DOCKER_REGISTRY}/${CI_PROJECT_PATH}:${PUSH_TAG}
-    # - docker tag ${LOCAL_IMAGE_BASE} ${IMAGE_NAME}
-    # - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
-    # - docker push ${IMAGE_NAME}
-
-test:
-  stage: test
-  image: docker.grammatech.com/rewriting/gtirb/ubuntu18-gcc7
-  tags:
-    - docker-exec
-  script:
-    - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
-    - docker run ${LOCAL_IMAGE_BASE} bash -c 'python3 setup.py test'
-
-cleanup:
-  stage: cleanup
-  tags:
-    - shell-exec
-  script:
-    - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
-    - docker rmi -f ${LOCAL_IMAGE_BASE}
-  when: always
+# cleanup:
+#   stage: cleanup
+#   tags:
+#     - shell-exec
+#   script:
+#     - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
+#     - docker rmi -f ${LOCAL_IMAGE_BASE}
+#   when: always
