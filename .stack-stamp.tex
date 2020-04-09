@@ -1,0 +1,58 @@
+\tikzstyle{stack} = [draw, fill=black!10, text centered, text=black, text width=12em]
+\tikzstyle{label} = [text=black,font=\tt]
+
+\tikzstyle{block} = [draw, minimum height=2em, minimum width=2em, rounded corners]
+\tikzstyle{datablock} = [block, fill=gt@gray!20]
+\tikzstyle{codeblock} = [block, fill=gt@red!20]
+\tikzstyle{asmblock} = [codeblock, text width=16em]
+
+\begin{tikzpicture}[node distance=2em]
+  %% Code Blocks
+  \node[asmblock] (c1) {A: xorl \$0xSECRET,(\%rsp)};
+  \node[codeblock, below=of c1] (c2) {B};
+  \node[codeblock, below left=of c2] (c3) {C};
+  \node[codeblock, below right=of c2] (c4) {D};
+  \node[codeblock, below=of c4] (c5) {E};
+  \node[codeblock, right=of c4] (c6) {G};
+  \node[codeblock, below=of c3] (c7) {F};
+  \node[codeblock, below right=of c7] (c8) {H};
+  \node[asmblock, below=of c8] (c9) {I: xorl \$0xSECRET,(\%rsp); ret};
+
+  %% Proxy Blocks
+  \node[above left=of c1] (p1) {};
+  \node[below left=of c9] (p2) {};
+
+  %% Control Flow
+  \draw[->, very thick] (c1) to (c2);
+  \draw[->, crossed, bend right] (c2) to (c3);
+  \draw[->, crossed, bend left] (c2) to (c4);
+  \draw[->, crossed, bend left] (c4) to (c6);
+  \draw[->, crossed, bend left] (c6) to (c4);
+  \draw[->, crossed] (c4) to (c5);
+  \draw[->, crossed] (c3) to (c7);
+  \draw[->, crossed, bend left] (c5) to (c8);
+  \draw[->, very thick, bend right] (c7) to (c8);
+  \draw[->, very thick] (c8) to (c9);
+  \draw[->, very thick, bend right, dashed] (p1.west) to (c1.west);
+  \draw[->, very thick, bend right, dashed] (c9.west) to (p2.west);
+
+  %% Function
+  \node[draw, dotted, very thick, fit=(c1) (c3)  (c6) (c9)] (func) {};
+  \node[label, above=0.25em of func] () {Function};
+
+  %% Stack
+  \node[stack, right=6em of c1] (s1) {Ret. Addr.};
+  \node[stack, below=0em of s1] (s2) {~\\~\\~\\~};
+  \node[stack, below=0em of s2] (s3) {~\\~\\~};
+  \node[stack, below=0em of s3] (s4) {~\\~\\~\\~\\~\\~\\~};
+  \node[stack, below=0em of s4] (s5) {...\\~\\~};
+  \node[fit=(s1) (s5)] (stack) {};
+  \node[label, above=0.25em of stack] () {Stack};
+
+  %% Lock and unlock
+  \draw[->, very thick, dotted, draw=gt@red] (c1.north east) |- node[auto, near end, text=gt@red, above] {Lock} (s1.north west);
+  \node[right=3em of c9] (anchor) {};
+  \draw[very thick, dotted, draw=gt@red] (c9.east) |- node[auto, very near end, text=gt@red, below] {Unlock} (anchor.center);
+  \draw[->, very thick, dotted, draw=gt@red] (anchor.center) |- (s1.south west) ;
+
+\end{tikzpicture}
