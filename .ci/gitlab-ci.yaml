@@ -63,8 +63,6 @@ test_package:
   tags:
     - docker-exec
   image: $BUILD_IMAGE_NAME
-  artifacts:
-    - dist/gtirb_stack_stamp-?.?.?-py3-none-any.whl
   script:
     - python3 -m pip install "*.whl"
 
