@@ -11,7 +11,7 @@ RUN apt-get update \
 RUN pip3 install "virtualenv<20.0.0"
 RUN pip3 install pre-commit
 
-COPY . /gt/gtirb-stack-stamp/
-WORKDIR /gt/gtirb-stack-stamp/
+# COPY . /gt/gtirb-stack-stamp/
+# WORKDIR /gt/gtirb-stack-stamp/
 
-RUN pre-commit run --all-files
+# RUN pre-commit run --all-files

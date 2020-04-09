@@ -3,20 +3,35 @@ variables:
   LOCAL_IMAGE_NAME: '$CI_BUILD_REF_NAME-$CI_PIPELINE_ID'
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_STRATEGY: clone
+  FORMATTER_IMAGE_NAME: '${DOCKER_REGISTRY}/${CI_PROJECT_PATH}/formatter'
 
 stages:
+  - build-images
   - check-format
   - build
   - test
   - cleanup
 
+build-images:
+  # rules:
+  #   only changes in .ci/Docker.formatter
+  stage: build-images
+  tags: shell-exec
+  script:
+    - docker build -t $FORMATTER_IMAGE_NAME .ci/Dockerfile.formatter .
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
+    - docker push $FORMATTER_IMAGE_NAME
+
 check-format:
   stage: check-format
+  tags: docker-exec
+  image: $FORMATTER_IMAGE_NAME
   script:
-    - docker build --rm -f .ci/Dockerfile.formatter .
+    - pre-commit run --all-files
 
 build:
   stage: build
+  tags: shell-exec
   script:
     - if [ "$CI_COMMIT_REF_SLUG" = "master" ];
       then
@@ -35,12 +50,14 @@ build:
 
 test:
   stage: test
+  tags: shell-exec
   script:
     - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
     - docker run ${LOCAL_IMAGE_BASE} bash -c 'python3 setup.py test'
 
 cleanup:
   stage: cleanup
+  tags: shell-exec
   script:
     - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
     - docker rmi -f ${LOCAL_IMAGE_BASE}
