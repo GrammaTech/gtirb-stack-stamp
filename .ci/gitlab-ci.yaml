@@ -64,7 +64,7 @@ test_package:
     - docker-exec
   image: $BUILD_IMAGE_NAME
   script:
-    - for f in *.whl; do python3 -m pip install $f; done
+    - for f in dist/*.whl; do python3 -m pip install $f; done
 
 # cleanup:
 #   stage: cleanup
