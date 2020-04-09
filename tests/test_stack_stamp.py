@@ -11,7 +11,7 @@ class StackStampTest(unittest.TestCase):
         return ec == 0
 
     def setUp(self):
-        self._test_file = os.path.join("dist", "factorial")
+        self._test_file = os.path.join("tests", "factorial")
         self.assertTrue(os.path.isfile(self._test_file))
 
     def test_1_invocation(self):
