@@ -2,7 +2,7 @@ variables:
   DOCKER_REGISTRY: "docker.grammatech.com"
   LOCAL_IMAGE_NAME: '$CI_BUILD_REF_NAME-$CI_PIPELINE_ID'
   GIT_SUBMODULE_STRATEGY: recursive
-  GIT_STRATEGY: clone
+  GIT_STRATEGY: fetch
   FORMATTER_IMAGE_NAME: '${DOCKER_REGISTRY}/${CI_PROJECT_PATH}/formatter'
   BUILD_IMAGE_NAME: '${DOCKER_REGISTRY}/${CI_PROJECT_PATH}/build'
 
@@ -37,7 +37,7 @@ check-format:
     - pre-commit run --all-files
 
 test:
-  stage: build
+  stage: test
   tags:
     - docker-exec
   image: $BUILD_IMAGE_NAME
@@ -59,12 +59,12 @@ build:
 test_package:
   variables:
     GIT_STRATEGY: none
-  stage: build
+  stage: test_package
   tags:
     - docker-exec
   image: $BUILD_IMAGE_NAME
   script:
-    - python3 -m pip install "*.whl"
+    - for f in *.whl; do python3 -m pip install $f; done
 
 # cleanup:
 #   stage: cleanup
