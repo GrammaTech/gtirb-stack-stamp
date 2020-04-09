@@ -16,7 +16,8 @@ build-images:
   # rules:
   #   only changes in .ci/Docker.formatter
   stage: build-images
-  tags: shell-exec
+  tags:
+    - shell-exec
   script:
     - docker build -t $FORMATTER_IMAGE_NAME .ci/Dockerfile.formatter .
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
@@ -24,14 +25,16 @@ build-images:
 
 check-format:
   stage: check-format
-  tags: docker-exec
+  tags:
+    - docker-exec
   image: $FORMATTER_IMAGE_NAME
   script:
     - pre-commit run --all-files
 
 build:
   stage: build
-  tags: shell-exec
+  tags:
+    - shell-exec
   script:
     - if [ "$CI_COMMIT_REF_SLUG" = "master" ];
       then
@@ -50,14 +53,16 @@ build:
 
 test:
   stage: test
-  tags: shell-exec
+  tags:
+    - shell-exec
   script:
     - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
     - docker run ${LOCAL_IMAGE_BASE} bash -c 'python3 setup.py test'
 
 cleanup:
   stage: cleanup
-  tags: shell-exec
+  tags:
+    - shell-exec
   script:
     - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
     - docker rmi -f ${LOCAL_IMAGE_BASE}
