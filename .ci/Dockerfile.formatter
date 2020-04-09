@@ -14,4 +14,4 @@ RUN pip3 install pre-commit
 # COPY . /gt/gtirb-stack-stamp/
 # WORKDIR /gt/gtirb-stack-stamp/
 
-RUN pre-commit install
+# RUN pre-commit run --all-files
