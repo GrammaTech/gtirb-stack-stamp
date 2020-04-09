@@ -20,7 +20,7 @@
 (in-readtable :curry-compose-reader-macros)
 (defmethod size ((obj gtirb-node)) (gtirb:size obj))
 
-
+
 ;;; Implementation
 (defgeneric stack-stamp (object)
   (:documentation "Apply the stack-stamp transformation.")
@@ -51,7 +51,7 @@
 
 (defmethod stack-stamp :around ((obj gtirb-node)) (call-next-method) obj)
 
-
+
 ;;;; Main test suite.
 (defsuite test)
 (in-suite test)
