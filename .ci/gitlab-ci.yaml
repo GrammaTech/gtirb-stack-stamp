@@ -9,8 +9,9 @@ variables:
 stages:
   - build-images
   - check-format
-  - build
   - test
+  - build
+  - test_package
   - cleanup
 
 build-images:
@@ -35,30 +36,57 @@ check-format:
   script:
     - pre-commit run --all-files
 
+test:
+  stage: build
+  tags:
+    - docker-exec
+  image: $BUILD_IMAGE_NAME 
+  script:
+    - python3 setup.py test
+
 build:
   stage: build
   tags:
-    - shell-exec
+    - docker-exec
+  image: $BUILD_IMAGE_NAME 
+  artifacts:
+    - dist/gtirb_stack_stamp-?.?.?-py3-none-any.whl
   script:
-    - if [ "$CI_COMMIT_REF_SLUG" = "master" ];
-      then
-          PUSH_TAG=latest;
-      else
-          PUSH_TAG=$CI_COMMIT_REF_SLUG;
-      fi
-    - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
-    - docker pull ${DOCKER_REGISTRY}/rewriting/gtirb/ubuntu18-gcc7
-    - docker build -f .ci/Dockerfile.build -t ${LOCAL_IMAGE_BASE} .
-    - export IMAGE_NAME=${DOCKER_REGISTRY}/${CI_PROJECT_PATH}:${PUSH_TAG}
-    - docker tag ${LOCAL_IMAGE_BASE} ${IMAGE_NAME}
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
-    - docker push ${IMAGE_NAME}
+    - python3 setup.py sdist bdist_wheel
+
+test_package:
+  variables:
+    GIT_STRATEGY: none
+  stage: build
+  tags:
+    - docker-exec
+  image: $BUILD_IMAGE_NAME 
+  artifacts:
+    - dist/gtirb_stack_stamp-?.?.?-py3-none-any.whl
+  script:
+    - python3 -m pip install "*.whl"
+
+
+    # - if [ "$CI_COMMIT_REF_SLUG" = "master" ];
+    #   then
+    #       PUSH_TAG=latest;
+    #   else
+    #       PUSH_TAG=$CI_COMMIT_REF_SLUG;
+    #   fi
+    # - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
+    # - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
+    # - docker pull ${DOCKER_REGISTRY}/rewriting/gtirb/ubuntu18-gcc7
+    # - docker build -f .ci/Dockerfile.build -t ${LOCAL_IMAGE_BASE} .
+    # - export IMAGE_NAME=${DOCKER_REGISTRY}/${CI_PROJECT_PATH}:${PUSH_TAG}
+    # - docker tag ${LOCAL_IMAGE_BASE} ${IMAGE_NAME}
+    # - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
+    # - docker push ${IMAGE_NAME}
 
 test:
   stage: test
+  image: docker.grammatech.com/rewriting/gtirb/ubuntu18-gcc7
   tags:
-    - shell-exec
+    - docker-exec
   script:
     - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
     - docker run ${LOCAL_IMAGE_BASE} bash -c 'python3 setup.py test'
