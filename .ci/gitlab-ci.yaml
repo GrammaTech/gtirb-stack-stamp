@@ -4,6 +4,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_STRATEGY: clone
   FORMATTER_IMAGE_NAME: '${DOCKER_REGISTRY}/${CI_PROJECT_PATH}/formatter'
+  BUILD_IMAGE_NAME: '${DOCKER_REGISTRY}/${CI_PROJECT_PATH}/build'
 
 stages:
   - build-images
@@ -19,9 +20,12 @@ build-images:
   tags:
     - shell-exec
   script:
-    - docker build -t $FORMATTER_IMAGE_NAME .ci/Dockerfile.formatter .
+    - docker build -t $FORMATTER_IMAGE_NAME -f .ci/Dockerfile.formatter .
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
     - docker push $FORMATTER_IMAGE_NAME
+    - docker build -t $BUILD_IMAGE_NAME -f .ci/Dockerfile.build .
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
+    - docker push $BUILD_IMAGE_NAME
 
 check-format:
   stage: check-format
