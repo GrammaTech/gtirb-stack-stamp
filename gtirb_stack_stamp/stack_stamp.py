@@ -24,7 +24,7 @@ def get_function_stamp_value(func):
 
 
 def apply_stack_stamp(ir, logger=logging.Logger("null"), context=None):
-    logger.info("Preparing IR for rewriting...")
+    logger.info('Preparing IR for rewriting...')
     ctx = RewritingContext(ir) if context is None else context
     for m in ctx.ir.modules:
         functions = Function.build_functions(m)
