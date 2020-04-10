@@ -64,6 +64,14 @@
                                                    "tests/hello.v1.gtirb"))))
   (:teardown (setf *hello* nil)))
 
+(defun drop-cfi (ir)
+  (mapc (lambda (module)
+          (setf (aux-data module)
+                (remove-if [{string= "cfiDirectives"} #'car]
+                           (aux-data module))))
+        (modules ir))
+  ir)
+
 (deftest stack-stamp-hello ()
   (nest
    (with-fixture hello)
