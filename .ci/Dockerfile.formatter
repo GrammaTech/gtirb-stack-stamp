@@ -6,10 +6,19 @@ RUN apt-get update \
     python3-pip \
     clang-format \
     git \
-    curl
+    curl \
+    sbcl \
+    emacs-nox \
+    slime \
+    elpa-paredit
 
 RUN pip3 install "virtualenv<20.0.0"
 RUN pip3 install pre-commit
+
+# Install the lisp-format pre-commit format checker.
+RUN curl https://raw.githubusercontent.com/eschulte/lisp-format/master/lisp-format > /usr/bin/lisp-format
+RUN chmod +x /usr/bin/lisp-format
+RUN echo "(add-to-list 'load-path \"/usr/share/emacs/site-lisp/\")" > /root/.lisp-formatrc
 
 # COPY . /gt/gtirb-stack-stamp/
 # WORKDIR /gt/gtirb-stack-stamp/
