@@ -24,7 +24,7 @@ build-images:
     - docker build -t $FORMATTER_IMAGE_NAME -f .ci/Dockerfile.formatter .
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
     - docker push $FORMATTER_IMAGE_NAME
-    - docker build -t $BUILD_IMAGE_NAME -f .ci/Dockerfile.build .
+    - docker build -t $BUILD_IMAGE_NAME --no-cache -f .ci/Dockerfile.build .
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
     - docker push $BUILD_IMAGE_NAME
 
