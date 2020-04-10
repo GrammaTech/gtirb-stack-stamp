@@ -1,16 +1,12 @@
 FROM docker.grammatech.com/rewriting/gtirb/ubuntu18-gcc7
 
 RUN apt-get install -y python3-pip && \
-    python3 -m pip install --user --upgrade setuptools wheel
+    python3 -m pip install --upgrade setuptools wheel
 
 WORKDIR /gt/gtirb/build/python
 RUN python3 setup.py develop
 
 RUN wget -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-0.1.0-py3-none-any.whl?job=build -O gtirb_functions-0.1.0-py3-none-any.whl && \
-    python3 -m pip install gtirb_functions-0.1.0-py3-none-any.whl
-
-# COPY . /gt/gtirb-stack-stamp/
-# WORKDIR /gt/gtirb-stack-stamp/
-
-# RUN rm -rf gtirb_stack_stamp.egg-info
-# RUN python3 setup.py develop
+    wget -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts/master/raw/dist/gtirb_capstone-0.1.0-py3-none-any.whl?job=build -O gtirb_capstone-0.1.0-py3-none-any.whl && \
+    python3 -m pip install gtirb_functions-0.1.0-py3-none-any.whl && \
+    python3 -m pip install gtirb_capstone-0.1.0-py3-none-any.whl
