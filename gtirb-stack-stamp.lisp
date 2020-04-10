@@ -14,7 +14,7 @@
   (:shadowing-import-from :gt :size)
   (:import-from :cl-intbytes :int->octets :octets->uint)
   (:import-from :asdf/system :system-relative-pathname)
-  (:shadow :version :architecture :mode :symbol :address)
+  (:shadow :version :architecture :mode :symbol)
   (:export :gtirb-stack-stamp))
 (in-package :gtirb-stack-stamp/gtirb-stack-stamp)
 (in-readtable :curry-compose-reader-macros)
@@ -63,6 +63,14 @@
                          (system-relative-pathname "gtirb-stack-stamp"
                                                    "tests/hello.v1.gtirb"))))
   (:teardown (setf *hello* nil)))
+
+(defun drop-cfi (ir)
+  (mapc (lambda (module)
+          (setf (aux-data module)
+                (remove-if [{string= "cfiDirectives"} #'car]
+                           (aux-data module))))
+        (modules ir))
+  ir)
 
 (deftest stack-stamp-hello ()
   (nest

@@ -11,3 +11,9 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-merge-conflict
+  - repo: https://github.com/eschulte/lisp-format
+    rev: master
+    hooks:
+      - id: lisp-format
+        name: lisp-format
+        args: [-style=file]
