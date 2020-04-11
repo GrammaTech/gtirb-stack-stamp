@@ -1,0 +1,18 @@
+#!/bin/bash
+#
+# Test that a stack stamp transformation works using the CL API.
+#
+set -ex
+echo 'main(){puts("hello world");}'|gcc -x c - -o /tmp/hello
+ddisasm /tmp/hello --ir /tmp/hello.gtirb
+sbcl --noinform --disable-debugger \
+   --eval '(ql:quickload :gtirb-stack-stamp)' \
+   --eval '(in-package :gtirb-stack-stamp)' \
+   --eval '(write-gtirb (drop-cfi (stack-stamp (read-gtirb "/tmp/hello.gtirb")))
+                        "/tmp/hello.ss.gtirb")' \
+   --eval '(uiop:quit)'
+gtirb-layout --in /tmp/hello.ss.gtirb --out /tmp/hello.ss.layout.gtirb
+gtirb-pprinter /tmp/hello.ss.layout.gtirb --skip-section .eh_frame \
+               --asm /tmp/hello.ss.s \
+               --binary /tmp/hello.ss
+/tmp/hello.ss|grep -q "hello world"

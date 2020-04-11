@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# Test that a nop transformation works using the CL API.
+#
+set -ex
+echo 'main(){puts("hello world");}'|gcc -x c - -o /tmp/hello
+ddisasm /tmp/hello --ir /tmp/hello.gtirb
+sbcl --noinform --disable-debugger \
+   --eval '(ql:quickload :gtirb-stack-stamp)' \
+   --eval '(in-package :gtirb-stack-stamp)' \
+   --eval '(write-gtirb (drop-cfi (read-gtirb "/tmp/hello.gtirb"))
+                        "/tmp/hello.nop.gtirb")' \
+   --eval '(uiop:quit)'
+gtirb-pprinter /tmp/hello.nop.gtirb --skip-section .eh_frame \
+               --asm /tmp/hello.nop.s \
+               --binary /tmp/hello.nop
+/tmp/hello.nop|grep -q "hello world"
