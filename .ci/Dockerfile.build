@@ -1,10 +1,17 @@
-FROM docker.grammatech.com/rewriting/gtirb/ubuntu18-gcc7
+FROM docker.grammatech.com/rewriting/ddisasm/ubuntu18-gcc
 
 RUN apt-get install -y python3-pip && \
     python3 -m pip install --upgrade setuptools wheel
 
-WORKDIR /gt/gtirb/build/python
+WORKDIR /ddisasm/gtirb/build/python
 RUN python3 setup.py develop
+
+RUN git clone https://github.com/keystone-engine/keystone.git && \
+    cd keystone && \
+    mkdir build && \
+    cd build && \
+    ../make-share.sh && \
+    make install
 
 RUN wget -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-0.1.0-py3-none-any.whl?job=build -O gtirb_functions-0.1.0-py3-none-any.whl
 RUN wget -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts/master/raw/dist/gtirb_capstone-0.1.0-py3-none-any.whl?job=build -O gtirb_capstone-0.1.0-py3-none-any.whl

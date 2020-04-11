@@ -36,8 +36,8 @@ def main():
         "-v", "--verbose", action="store_true", help="Verbose output"
     )
     ap.add_argument("-q", "--quiet", action="store_true", help="No output")
-
     args = ap.parse_args()
+
     logging.basicConfig(format="%(message)s")
     logger = logging.getLogger("gtirb.stackstamp")
     if args.verbose:
@@ -45,14 +45,19 @@ def main():
     elif not args.quiet:
         logger.setLevel(logging.INFO)
 
-    logger.info("Loading IR...")
+    if args.rebuild is not None and args.outfile is None:
+        logger.error("Error: with --rebuild, --outfile is required")
+        exit(1)
+
+    logger.info("Loading IR... " + args.infile)
     ir = IR.load_protobuf(args.infile)
 
     logger.info("Stamping functions...")
     apply_stack_stamp(ir, logger=logger)
 
-    logger.info("Saving new IR...")
-    ir.save_protobuf(args.outfile)
+    if args.outfile is not None:
+        logger.info("Saving new IR...")
+        ir.save_protobuf(args.outfile)
 
     logger.info("Done.")
 
@@ -66,8 +71,10 @@ def main():
             "-b",
             args.rebuild,
         ]
-        subprocess.call(args_pp)
+        ec = subprocess.call(args_pp)
+        return ec
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())

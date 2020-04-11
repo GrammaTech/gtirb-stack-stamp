@@ -12,8 +12,8 @@
 #
 import random
 import logging
-from gtrib_function import Function
-from .rewriting import RewritingContext
+from gtirb_functions import Function
+from gtirb_capstone import RewritingContext
 
 
 def get_function_stamp_value(func):
