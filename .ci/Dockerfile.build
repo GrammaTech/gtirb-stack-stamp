@@ -6,7 +6,8 @@ RUN apt-get install -y python3-pip && \
 WORKDIR /gt/gtirb/build/python
 RUN python3 setup.py develop
 
-RUN wget -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-0.1.0-py3-none-any.whl?job=build -O gtirb_functions-0.1.0-py3-none-any.whl && \
-    wget -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts/master/raw/dist/gtirb_capstone-0.1.0-py3-none-any.whl?job=build -O gtirb_capstone-0.1.0-py3-none-any.whl && \
-    python3 -m pip install gtirb_functions-0.1.0-py3-none-any.whl && \
+RUN wget -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-0.1.0-py3-none-any.whl?job=build -O gtirb_functions-0.1.0-py3-none-any.whl
+RUN wget -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts/master/raw/dist/gtirb_capstone-0.1.0-py3-none-any.whl?job=build -O gtirb_capstone-0.1.0-py3-none-any.whl
+
+RUN python3 -m pip install gtirb_functions-0.1.0-py3-none-any.whl && \
     python3 -m pip install gtirb_capstone-0.1.0-py3-none-any.whl
