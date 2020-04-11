@@ -44,9 +44,12 @@
             (entries obj))
       (mapc
        (lambda (ret-block)
-         (if-let ((ret-position (position-if [{eql :ret} #'mnemonic]
-                                             (instructions ret-block))))
-           (setf (bytes ret-block ret-position ret-position) stamp-bytes)))
+         ;; Convert instruction index into byte index.
+         (when-let* ((ins (instructions ret-block))
+                     (ret-ins-pos (position-if [{eql :ret} #'mnemonic] ins))
+                     (ret-byte-pos (reduce #'+ (subseq ins 0 ret-ins-pos)
+                                           :key #'size)))
+           (setf (bytes ret-block ret-byte-pos ret-byte-pos) stamp-bytes)))
        (returns obj)))))
 
 (defmethod stack-stamp :around ((obj gtirb-node)) (call-next-method) obj)
