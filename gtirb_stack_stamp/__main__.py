@@ -64,7 +64,7 @@ def main():
     if args.rebuild is not None:
         logger.info("Pretty printing...")
         args_pp = [
-            "gtirb-binary-printer",
+            "gtirb-pprinter",
             args.outfile,
             "--skip-section",
             ".eh_frame",
