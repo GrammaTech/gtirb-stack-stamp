@@ -18,3 +18,22 @@ RUN wget -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts
 
 RUN python3 -m pip install gtirb_functions-0.1.0-py3-none-any.whl && \
     python3 -m pip install gtirb_capstone-0.1.0-py3-none-any.whl
+
+# Common Lisp Setup
+RUN apt-get install -y sbcl
+RUN curl -O https://beta.quicklisp.org/quicklisp.lisp
+RUN sbcl --load quicklisp.lisp \
+        --eval '(quicklisp-quickstart:install)' \
+        --eval '(let ((ql-util::*do-not-prompt* t)) (ql:add-to-init-file))'
+RUN mkdir -p $HOME/quicklisp/local-projects
+WORKDIR /root/quicklisp/local-projects
+RUN git clone https://github.com/GrammaTech/cl-utils.git gt/
+RUN git clone https://github.com/rpav/cl-interval.git
+RUN git clone https://github.com/GrammaTech/cl-capstone.git
+RUN git clone --branch quicklisp https://git.grammatech.com/rewriting/gtirb.git
+RUN git clone https://github.com/GrammaTech/gtirb-functions.git
+RUN git clone https://git.grammatech.com/rewriting/gtirb-capstone.git
+RUN git clone https://github.com/GrammaTech/keystone.git
+RUN sbcl --eval '(ql:register-local-projects)'
+RUN sbcl --eval '(ql:quickload :gtirb-capstone)'
+RUN sbcl --eval '(ql:quickload :gt/full)'

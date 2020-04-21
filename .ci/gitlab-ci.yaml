@@ -36,13 +36,23 @@ check-format:
   script:
     - pre-commit run --all-files
 
-test:
+test-python:
   stage: test
   tags:
     - docker-exec
   image: $BUILD_IMAGE_NAME
   script:
     - python3 setup.py test
+
+test-common-lisp:
+  stage: test
+  tags:
+    - docker-exec
+  image: $BUILD_IMAGE_NAME
+  script:
+    - ln -s $(pwd) /root/quicklisp/local-projects/gtirb-stack-stamp
+    - sbcl --eval '(ql:quickload :gtirb-stack-stamp)' --eval '(asdf:make :gtirb-stack-stamp :type :program :monolithic t)'
+    - ./stack-stamp --help
 
 build:
   stage: build
