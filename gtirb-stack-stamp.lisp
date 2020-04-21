@@ -10,7 +10,8 @@
 ;;; endorsement should be inferred.
 (defpackage :gtirb-stack-stamp/gtirb-stack-stamp
   (:nicknames :gtirb-stack-stamp)
-  (:use :gt :gtirb :gtirb-functions :gtirb-capstone :stefil)
+  (:use :gt/full :gtirb :gtirb-functions :gtirb-capstone
+        :stefil :command-line-arguments)
   (:shadowing-import-from :gt :size)
   (:import-from :cl-intbytes :int->octets :octets->uint)
   (:import-from :asdf/system :system-relative-pathname)
@@ -54,7 +55,7 @@
 
 (defmethod stack-stamp :around ((obj gtirb-node)) (call-next-method) obj)
 
-
+
 ;;;; Main test suite.
 (defsuite test)
 (in-suite test)
@@ -109,3 +110,65 @@
        (is (< (length original-interval-bytes)
               (length (interval-bytes *hello*))))
        (is (< (length original-bytes) (length new-bytes)))))))
+
+
+;;;; External command-line driver.
+;;;
+;;; Compile with the following command:
+;;;   sbcl --eval '(ql:quickload :gtirb-stack-stamp)' \
+;;;        --eval '(asdf:make :gtirb-stack-stamp :type :program :monolithic t)'
+;;;
+(define-command ss
+    (input output
+           &spec
+           '((("help" #\h #\?) :type boolean :optional t
+              :documentation "display help output")
+             (("gtirb" #\g) :type boolean :optional t :initial-value nil
+              :documentation "output binary gtirb (default)")
+             (("asm" #\a) :type boolean :optional t :initial-value nil
+              :documentation "output assembly text")
+             (("binary" #\b) :type boolean :optional t :initial-value nil
+              :documentation "output a binary executable"))
+           &aux ir)
+  "Apply \"stack stamp\" protections to a binary executable." ""
+  (when help (show-help-for-stamp))
+  (unless (or gtirb asm binary)
+    (error "Must specify at least one output type: gtirb, asm, or binary."))
+  (setf ir
+        ;; If INPUT is a path that doesn't end in "gtirb" call ddisasm.
+        (if (and (or (pathnamep input) (stringp input))
+                 (not (string= "gtirb" (pathname-type input))))
+            (with-temporary-file (:pathname temp :type "gtirb" :direction input)
+              (wait-process
+               (launch-program
+                (list "ddisasm" (namestring input) "--ir" (namestring temp))
+                :output *standard-output*
+                :error-output *error-output*))
+              (read-gtirb temp))
+            ;; Otherwise we assume our input is already a GTIRB file.
+            (read-gtirb input)))
+  (setf ir (stack-stamp (drop-cfi ir)))
+  (labels ((normalize-path (others extension)
+             (let ((new (if others
+                            (make-pathname :type extension :defaults output)
+                            output)))
+               (when (and (not (equalp new output)) (probe-file new))
+                 (error "Output ~a already exists" (namestring new)))
+               (namestring new)))
+           (gtirb-path () (normalize-path (or asm binary) "gtirb"))
+           (binary-path () (normalize-path (or asm gtirb) nil))
+           (asm-path () (normalize-path (or gtirb binary) "s")))
+    (with-temporary-file (:pathname temp :type "gtirb" :direction output)
+      (write-gtirb ir temp)
+      (when gtirb
+        (wait-process
+         (launch-program (list "cp" (namestring temp) (gtirb-path)))))
+      (when (or asm binary)
+        (wait-process
+         (launch-program
+          `("gtirb-pprinter" ,(namestring temp)
+                             "--skip-section"".eh_frame"
+                             ,@(when binary (list "--binary" (binary-path)))
+                             ,@(when asm (list "--asm" (asm-path))))
+          :output *standard-output*
+          :error-output *error-output*))))))

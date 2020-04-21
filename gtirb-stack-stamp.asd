@@ -23,5 +23,8 @@ system."
     :depends-on (:gtirb-stack-stamp/gtirb-stack-stamp)
     :class :package-inferred-system
     :defsystem-depends-on (:asdf-package-system)
+    :build-operation "asdf:program-op"
+    :build-pathname "stack-stamp"
+    :entry-point "gtirb-stack-stamp::run-ss"
     :perform
     (test-op (o c) (symbol-call :gtirb-stack-stamp '#:test)))
