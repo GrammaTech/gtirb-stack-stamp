@@ -33,7 +33,7 @@ class StackStampTest(unittest.TestCase):
         ec = subprocess.call(args)
         self.assertEqual(ec, 0)
 
-        # args = ['./factorial.stamp', '10']
-        # output = subprocess.check_output(args)
-        # self.assertEqual(output, 'Factorial(10)=3628800')
+        args = ['./factorial.stamp', '10']
+        output = subprocess.check_output(args)
+        self.assertEqual(output, 'Factorial(10)=3628800')
         return True
