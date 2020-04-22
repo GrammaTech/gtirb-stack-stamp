@@ -12,8 +12,8 @@ if __name__ == "__main__":
     setup(
         name="gtirb-stack-stamp",
         version="0.1.0",
-        author="blevine",
-        author_email="blevine@grammatech.com",
+        author="Grammatech",
+        author_email="",
         description="Apply a stack-stamp transform to GTIRB",
         package_data={"gtirb_stack_stamp": ["gtirb_stack_stamp/*.py"]},
         packages=find_packages(),
