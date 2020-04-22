@@ -55,7 +55,7 @@
 
 (defmethod stack-stamp :around ((obj gtirb-node)) (call-next-method) obj)
 
-
+
 ;;;; Main test suite.
 (defsuite test)
 (in-suite test)
@@ -111,7 +111,7 @@
               (length (interval-bytes *hello*))))
        (is (< (length original-bytes) (length new-bytes)))))))
 
-
+
 ;;;; External command-line driver.
 ;;;
 ;;; Compile with the following command:
