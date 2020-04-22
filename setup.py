@@ -13,7 +13,7 @@ if __name__ == "__main__":
         name="gtirb-stack-stamp",
         version="0.1.0",
         author="Grammatech",
-        author_email="",
+        author_email="gtirb@grammatech.com",
         description="Apply a stack-stamp transform to GTIRB",
         package_data={"gtirb_stack_stamp": ["gtirb_stack_stamp/*.py"]},
         packages=find_packages(),
