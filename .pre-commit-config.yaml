@@ -10,6 +10,7 @@ repos:
       - id: flake8
       - id: end-of-file-fixer
       - id: trailing-whitespace
+        args: ["--chars"," \t"]
       - id: check-merge-conflict
   - repo: https://github.com/eschulte/lisp-format
     rev: master
