@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cstdint>
 #include "Logger.h"
 
@@ -137,7 +138,8 @@ public:
     RewritingContext(csh cph = 0, ks_engine* ksh = NULL)
     {
         if ( cph == 0) {
-              [[maybe_unused]] int Ret = cs_open(CS_ARCH_X86, CS_MODE_64, &cs_handle_);
+              [[maybe_unused]] int Ret = cs_open(CS_ARCH_X86, CS_MODE_64,
+                  &cs_handle_);
               assert(Ret == CS_ERR_OK);
               cs_option(cs_handle_, CS_OPT_DETAIL, CS_OPT_ON);
         }
@@ -145,7 +147,8 @@ public:
             cs_handle_ = cph;
 
         if ( ksh == 0 ) {
-            auto err = ks_open(KS_ARCH_X86, KS_MODE_LITTLE_ENDIAN | KS_MODE_64, &ks_handle_);
+            auto err = ks_open(KS_ARCH_X86, KS_MODE_LITTLE_ENDIAN | KS_MODE_64,
+                &ks_handle_);
             std::cout << "err: " << err << std::endl;
             assert (err == KS_ERR_OK);
             ks_option(ks_handle_, KS_OPT_SYNTAX, KS_OPT_SYNTAX_ATT);
@@ -159,12 +162,14 @@ public:
     {
     cs_insn* instructions;
 
-        size_t count = cs_disasm(cs_handle_, node->rawBytes<uint8_t>(), node->getSize(),
-                (uint64_t)node->getAddress().value_or(Addr(0)), 0, &instructions);
+        size_t count = cs_disasm(cs_handle_, node->rawBytes<uint8_t>(),
+            node->getSize(),
+            (uint64_t)node->getAddress().value_or(Addr(0)), 0, &instructions);
 
         for (size_t i = 0; i < count; i++) {
             const auto& instruction = instructions[i];
-            std::cout << std::setbase(16) << std::setfill('0') << std::setw(8) << std::right
+            std::cout << std::setbase(16) << std::setfill('0') << std::setw(8)
+                << std::right
                 << instruction.address << ": " 
                 << instruction.op_str << std::endl;
         }
@@ -173,23 +178,23 @@ public:
     std::string to_hex(unsigned char *bytes, size_t nbytes) {
         std::stringstream res;
             for (int i ; i < nbytes ; i++)
-                res << i << ":" << std::setw(2) << std::setfill ('0') << 
-                  std::hex << static_cast<int>(bytes[i]) << " ";
-            std::cout << "dbg: " << res.str() << std::endl;
-       return res.str();
+                res << std::setw(2) << std::setfill ('0') << 
+                  std::hex << static_cast<int>(bytes[i]);
+       return std::string(res.str().c_str());
     }
 
     void make_asm(IR *ir, const char* data) {
         unsigned char *encoding;
         size_t encoding_nbytes, stmt_cnt;
 
-        int res = ks_asm(ks_handle_, "xorl $0x55,(%rsp);xorl $0xaa,4(%rsp);\n",
+        int res = ks_asm(ks_handle_, "xorl $0x85,(%rsp);xorl $0xaa,4(%rsp);\n",
             0, &encoding, &encoding_nbytes, &stmt_cnt);
         if (res != 0){
             std::cout << "err: " << ks_strerror(ks_errno(ks_handle_)) << std::endl;
         }
         else {
-            std::cout << "stmts: " << stmt_cnt << " nbytes: " << encoding_nbytes << std::endl;
+            std::cout << "stmts: " << stmt_cnt << " nbytes: " << encoding_nbytes
+                << std::endl;
             std::string my_encoding = to_hex(encoding, encoding_nbytes);
             std::cout << "My encoding: " << my_encoding << std::endl;
         }
@@ -251,7 +256,9 @@ int main(int argc, char** argv)
             for (auto& f : *functions) {
                 f->dump();
                 for (auto& block_uuid : f->entry_blocks) {
-                    auto block = static_cast<gtirb::CodeBlock*>(Node::getByUUID(ctx, block_uuid));
+                    auto block =
+                        static_cast<gtirb::CodeBlock*>(Node::getByUUID(ctx,
+                                    block_uuid));
                     rw_ctx.show_asm(ir, block);
                 }
             }
