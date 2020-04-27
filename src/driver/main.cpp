@@ -5,6 +5,7 @@
 #include <gtirb/version.h>
 
 #include <capstone/capstone.h>
+#include <keystone/keystone.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>
@@ -133,7 +134,7 @@ public:
 class RewritingContext
 {
 public:
-    RewritingContext(csh cph = 0, void* ksh = NULL)
+    RewritingContext(csh cph = 0, ks_engine* ksh = NULL)
     {
         if ( cph == 0) {
               [[maybe_unused]] int Ret = cs_open(CS_ARCH_X86, CS_MODE_64, &cs_handle_);
@@ -142,6 +143,16 @@ public:
         }
         else
             cs_handle_ = cph;
+
+        if ( ksh == 0 ) {
+            auto err = ks_open(KS_ARCH_X86, KS_MODE_LITTLE_ENDIAN | KS_MODE_64, &ks_handle_);
+            std::cout << "err: " << err << std::endl;
+            assert (err == KS_ERR_OK);
+            ks_option(ks_handle_, KS_OPT_SYNTAX, KS_OPT_SYNTAX_ATT);
+        }
+        else
+            ks_handle_ = ksh;
+
     }
 
     void show_asm(IR *ir, CodeBlock *node)
@@ -156,16 +167,37 @@ public:
             std::cout << std::setbase(16) << std::setfill('0') << std::setw(8) << std::right
                 << instruction.address << ": " 
                 << instruction.op_str << std::endl;
-            
-
-
         }
+    }
 
+    std::string to_hex(unsigned char *bytes, size_t nbytes) {
+        std::stringstream res;
+            for (int i ; i < nbytes ; i++)
+                res << i << ":" << std::setw(2) << std::setfill ('0') << 
+                  std::hex << static_cast<int>(bytes[i]) << " ";
+            std::cout << "dbg: " << res.str() << std::endl;
+       return res.str();
+    }
+
+    void make_asm(IR *ir, const char* data) {
+        unsigned char *encoding;
+        size_t encoding_nbytes, stmt_cnt;
+
+        int res = ks_asm(ks_handle_, "xorl $0x55,(%rsp);xorl $0xaa,4(%rsp);\n",
+            0, &encoding, &encoding_nbytes, &stmt_cnt);
+        if (res != 0){
+            std::cout << "err: " << ks_strerror(ks_errno(ks_handle_)) << std::endl;
+        }
+        else {
+            std::cout << "stmts: " << stmt_cnt << " nbytes: " << encoding_nbytes << std::endl;
+            std::string my_encoding = to_hex(encoding, encoding_nbytes);
+            std::cout << "My encoding: " << my_encoding << std::endl;
+        }
     }
 
 protected:
     csh cs_handle_;
-    /* ksh ks_handle; */ 
+    ks_engine *ks_handle_; 
 
 };
 
@@ -224,6 +256,8 @@ int main(int argc, char** argv)
                 }
             }
         }
+
+        rw_ctx.make_asm(ir, NULL);
 
         /* // Perform the Pretty Printing step. */
         /* LOG_INFO << std::setw(24) << std::left << "Pretty-printing hints..." */

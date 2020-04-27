@@ -25,6 +25,7 @@ set(${PROJECT_NAME}_SRC
 )
 
 find_library(CAPSTONE NAMES capstone)
+find_library(KEYSTONE NAMES keystone)
 
 # Unix, but not Cygwin.
 IF(UNIX AND NOT WIN32)
@@ -32,6 +33,7 @@ IF(UNIX AND NOT WIN32)
     dl
     pthread
     ${CAPSTONE}
+    ${KEYSTONE}
   )
 ELSE()
   SET(SYSLIBS
