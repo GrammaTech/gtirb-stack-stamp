@@ -24,11 +24,14 @@ set(${PROJECT_NAME}_SRC
   main.cpp
 )
 
+find_library(CAPSTONE NAMES capstone)
+
 # Unix, but not Cygwin.
 IF(UNIX AND NOT WIN32)
   SET(SYSLIBS
     dl
     pthread
+    ${CAPSTONE}
   )
 ELSE()
   SET(SYSLIBS

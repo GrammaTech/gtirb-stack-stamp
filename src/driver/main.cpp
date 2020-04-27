@@ -4,6 +4,8 @@
 #include <gtirb/IR.hpp>
 #include <gtirb/version.h>
 
+#include <capstone/capstone.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 #include <boost/program_options.hpp>
@@ -128,6 +130,46 @@ public:
     }
 };
 
+class RewritingContext
+{
+public:
+    RewritingContext(csh cph = 0, void* ksh = NULL)
+    {
+        if ( cph == 0) {
+              [[maybe_unused]] int Ret = cs_open(CS_ARCH_X86, CS_MODE_64, &cs_handle_);
+              assert(Ret == CS_ERR_OK);
+              cs_option(cs_handle_, CS_OPT_DETAIL, CS_OPT_ON);
+        }
+        else
+            cs_handle_ = cph;
+    }
+
+    void show_asm(IR *ir, CodeBlock *node)
+    {
+    cs_insn* instructions;
+
+        size_t count = cs_disasm(cs_handle_, node->rawBytes<uint8_t>(), node->getSize(),
+                (uint64_t)node->getAddress().value_or(Addr(0)), 0, &instructions);
+
+        for (size_t i = 0; i < count; i++) {
+            const auto& instruction = instructions[i];
+            std::cout << std::setbase(16) << std::setfill('0') << std::setw(8) << std::right
+                << instruction.address << ": " 
+                << instruction.op_str << std::endl;
+            
+
+
+        }
+
+    }
+
+protected:
+    csh cs_handle_;
+    /* ksh ks_handle; */ 
+
+};
+
+
 int main(int argc, char** argv)
 {
     boost::program_options::options_description desc("Allowed options");
@@ -162,6 +204,7 @@ int main(int argc, char** argv)
     {
         register_aux_data_types();
         gtirb::Context ctx;
+        RewritingContext rw_ctx = RewritingContext();
 
         LOG_INFO << std::setw(24) << std::left << "Reading IR: "
             << irPath << std::endl;
@@ -175,6 +218,10 @@ int main(int argc, char** argv)
             FunctionList *functions = FunctionList::build_functions( ir, ctx, *m );
             for (auto& f : *functions) {
                 f->dump();
+                for (auto& block_uuid : f->entry_blocks) {
+                    auto block = static_cast<gtirb::CodeBlock*>(Node::getByUUID(ctx, block_uuid));
+                    rw_ctx.show_asm(ir, block);
+                }
             }
         }
 
