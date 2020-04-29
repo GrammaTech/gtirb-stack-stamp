@@ -135,6 +135,8 @@ public:
 class RewritingContext
 {
 public:
+    typedef unsigned char encoding_t;
+
     RewritingContext(csh cph = 0, ks_engine* ksh = NULL)
     {
         if ( cph == 0) {
@@ -155,10 +157,15 @@ public:
         }
         else
             ks_handle_ = ksh;
-
     }
 
-    void show_asm(IR *ir, CodeBlock *node)
+    ~RewritingContext() {
+        for ( auto& p : encoding_mem ) {
+            ks_free(p);
+        }
+    }
+
+    void show_asm(CodeBlock *node)
     {
     cs_insn* instructions;
 
@@ -171,6 +178,7 @@ public:
             std::cout << std::setbase(16) << std::setfill('0') << std::setw(8)
                 << std::right
                 << instruction.address << ": " 
+                << instruction.mnemonic << " "
                 << instruction.op_str << std::endl;
         }
     }
@@ -183,24 +191,81 @@ public:
        return std::string(res.str().c_str());
     }
 
-    void make_asm(IR *ir, const char* data) {
-        unsigned char *encoding;
+    encoding_t* make_asm(IR *ir, const char* inst_stmts) {
+        encoding_t *encoding;
         size_t encoding_nbytes, stmt_cnt;
 
         int res = ks_asm(ks_handle_, "xorl $0x85,(%rsp);xorl $0xaa,4(%rsp);\n",
             0, &encoding, &encoding_nbytes, &stmt_cnt);
         if (res != 0){
             std::cout << "err: " << ks_strerror(ks_errno(ks_handle_)) << std::endl;
+            return NULL;
         }
         else {
             std::cout << "stmts: " << stmt_cnt << " nbytes: " << encoding_nbytes
                 << std::endl;
             std::string my_encoding = to_hex(encoding, encoding_nbytes);
             std::cout << "My encoding: " << my_encoding << std::endl;
+            encoding_mem.push_back(encoding);
+            return encoding;
         }
     }
 
+    void prepare_for_rewriting(Context &ctx, IR *ir)
+    {
+        // for m in modules
+        std::cout << "Preparing IR for rewriting ";
+        for ( auto &m : ir->modules() ) {
+            std::list<CodeBlock*> my_blocks;
+            for ( auto &cb : m.code_blocks() )
+                my_blocks.push_back(&cb);
+            
+            for ( auto &cb : my_blocks ) {
+                if (cb->getOffset() != 0 || 
+                        cb->getSize() != cb->getByteInterval()->getSize()) {
+                    std::cout << ".";
+                    isolate_bi(ctx, m, cb);
+                }
+            }
+        }
+        std::cout << std::endl;
+        //
+        // remove cfiDirectives aux_data
+    }
+
+    void isolate_bi(Context &ctx, Module &module, CodeBlock *cb)
+    {
+        
+        std::cout << "Code Block: " << cb->getOffset() << std::endl;
+        show_asm(cb);
+        uint64_t old_offset = cb->getOffset();
+        ByteInterval *old_bi = cb->getByteInterval();
+        ByteInterval *new_bi =
+            ByteInterval::Create(ctx,
+                    cb->bytes_begin<uint8_t>(),
+                    cb->bytes_end<uint8_t>());
+
+        auto sym_expr_range = old_bi->findSymbolicExpressionsAtOffset(
+                old_offset,old_offset + cb->getSize());
+        while ( !sym_expr_range.empty() )
+        {
+            std::cout << "symex" << std::endl;
+            auto s = sym_expr_range.begin();
+            auto old_se_offset = s->getOffset();
+            new_bi->addSymbolicExpression(
+                    old_se_offset-old_offset,
+                    s->getSymbolicExpression());
+            old_bi->removeSymbolicExpression(old_se_offset);
+            sym_expr_range = old_bi->findSymbolicExpressionsAtOffset(
+                    old_offset,old_offset + cb->getSize());
+        }
+
+        new_bi->addBlock(0, cb);
+        old_bi->removeBlock(cb);
+    }
+
 protected:
+    std::list<encoding_t*> encoding_mem;
     csh cs_handle_;
     ks_engine *ks_handle_; 
 
@@ -259,12 +324,17 @@ int main(int argc, char** argv)
                     auto block =
                         static_cast<gtirb::CodeBlock*>(Node::getByUUID(ctx,
                                     block_uuid));
-                    rw_ctx.show_asm(ir, block);
+                    rw_ctx.show_asm(block);
                 }
             }
         }
 
-        rw_ctx.make_asm(ir, NULL);
+        /* rw_ctx.make_asm(ir, NULL); */
+        rw_ctx.prepare_for_rewriting(ctx, ir);
+
+        std::ofstream out_gtirb(irPath.string()+".gtirb");
+        ir->save(out_gtirb);
+        out_gtirb.close();
 
         /* // Perform the Pretty Printing step. */
         /* LOG_INFO << std::setw(24) << std::left << "Pretty-printing hints..." */
