@@ -29,7 +29,7 @@ void register_aux_data_types() {
 class Function
 {
 public:
-    Function(gtirb::UUID uuid) : fn_uuid(uuid) { } 
+    Function(gtirb::UUID uuid) : fn_uuid(uuid) { }
 
     std::set<gtirb::UUID> entry_blocks;
     std::set<gtirb::UUID> exit_blocks;
@@ -38,7 +38,7 @@ public:
 
     void dump() {
         std::cout << "Function " << get_name() << std::endl;
-        std::cout << "\t" << "Total/Entry/Exit blocks: " 
+        std::cout << "\t" << "Total/Entry/Exit blocks: "
             << blocks.size() << "/"
             << entry_blocks.size() << "/"
             << exit_blocks.size()
@@ -177,7 +177,7 @@ public:
             const auto& instruction = instructions[i];
             std::cout << std::setbase(16) << std::setfill('0') << std::setw(8)
                 << std::right
-                << instruction.address << ": " 
+                << instruction.address << ": "
                 << instruction.mnemonic << " "
                 << instruction.op_str << std::endl;
         }
@@ -186,7 +186,7 @@ public:
     std::string to_hex(unsigned char *bytes, size_t nbytes) {
         std::stringstream res;
             for (int i ; i < nbytes ; i++)
-                res << std::setw(2) << std::setfill ('0') << 
+                res << std::setw(2) << std::setfill ('0') <<
                   std::hex << static_cast<int>(bytes[i]);
        return std::string(res.str().c_str());
     }
@@ -219,9 +219,9 @@ public:
             std::list<CodeBlock*> my_blocks;
             for ( auto &cb : m.code_blocks() )
                 my_blocks.push_back(&cb);
-            
+
             for ( auto &cb : my_blocks ) {
-                if (cb->getOffset() != 0 || 
+                if (cb->getOffset() != 0 ||
                         cb->getSize() != cb->getByteInterval()->getSize()) {
                     std::cout << ".";
                     isolate_bi(ctx, m, cb);
@@ -235,21 +235,21 @@ public:
 
     void isolate_bi(Context &ctx, Module &module, CodeBlock *cb)
     {
-        
-        std::cout << "Code Block: " << cb->getOffset() << std::endl;
-        show_asm(cb);
         uint64_t old_offset = cb->getOffset();
+        std::set<Symbol*> cb_syms;
         ByteInterval *old_bi = cb->getByteInterval();
         ByteInterval *new_bi =
             ByteInterval::Create(ctx,
                     cb->bytes_begin<uint8_t>(),
                     cb->bytes_end<uint8_t>());
 
+        for ( auto& s : module.findSymbols(*cb) )
+            cb_syms.insert(&s);
+
         auto sym_expr_range = old_bi->findSymbolicExpressionsAtOffset(
                 old_offset,old_offset + cb->getSize());
         while ( !sym_expr_range.empty() )
         {
-            std::cout << "symex" << std::endl;
             auto s = sym_expr_range.begin();
             auto old_se_offset = s->getOffset();
             new_bi->addSymbolicExpression(
@@ -260,14 +260,19 @@ public:
                     old_offset,old_offset + cb->getSize());
         }
 
-        new_bi->addBlock(0, cb);
-        old_bi->removeBlock(cb);
+        old_bi->getSection()->addByteInterval(new_bi);
+        if ( old_bi->getAddress().has_value() )
+            new_bi->setAddress( old_bi->getAddress().value() + cb->getOffset() );
+        CodeBlock *new_cb = new_bi->addBlock(0, cb);
+
+        for ( auto& s : cb_syms )
+            s->setReferent(new_cb);
     }
 
 protected:
     std::list<encoding_t*> encoding_mem;
     csh cs_handle_;
-    ks_engine *ks_handle_; 
+    ks_engine *ks_handle_;
 
 };
 
