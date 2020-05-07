@@ -5,6 +5,7 @@ variables:
   GIT_STRATEGY: fetch
   FORMATTER_IMAGE_NAME: '${DOCKER_REGISTRY}/${CI_PROJECT_PATH}/formatter'
   BUILD_IMAGE_NAME: '${DOCKER_REGISTRY}/${CI_PROJECT_PATH}/build'
+  GTIRB_BRANCH: master
 
 stages:
   - build-images
@@ -21,6 +22,9 @@ build-images:
   tags:
     - shell-exec
   script:
+    # acquire gtirb artifacts
+    - curl -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=python-wheel --output gtirb-python-wheel.zip
+    # run docker
     - docker build -t $FORMATTER_IMAGE_NAME -f .ci/Dockerfile.formatter .
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
     - docker push $FORMATTER_IMAGE_NAME

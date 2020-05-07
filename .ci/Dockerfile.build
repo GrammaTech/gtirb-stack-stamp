@@ -3,9 +3,13 @@ FROM docker.grammatech.com/rewriting/ddisasm/ubuntu18-gcc
 RUN apt-get install -y python3-pip && \
     python3 -m pip install --upgrade setuptools wheel
 
-WORKDIR /ddisasm/gtirb/build/python
-RUN python3 setup.py develop
+# Install GTIRB Python API
+COPY gtirb-python-wheel.zip .
+RUN unzip -o gtirb-python-wheel.zip \
+    && pip3 install *.whl \
+    && rm -rf *.whl gtirb-python-wheel.zip
 
+# Install Keystone
 RUN git clone https://github.com/keystone-engine/keystone.git && \
     cd keystone && \
     mkdir build && \
