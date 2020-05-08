@@ -3,6 +3,8 @@ FROM docker.grammatech.com/rewriting/ddisasm/ubuntu18-gcc
 RUN apt-get install -y python3-pip && \
     python3 -m pip install --upgrade setuptools wheel
 
+RUN ldconfig /usr/local/lib
+
 # Install GTIRB Python API
 COPY gtirb-python-wheel.zip .
 RUN unzip -o gtirb-python-wheel.zip \
