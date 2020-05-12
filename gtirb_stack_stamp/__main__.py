@@ -66,10 +66,13 @@ def main():
         args_pp = [
             "gtirb-pprinter",
             args.outfile,
+            "--keep-all",
             "--skip-section",
             ".eh_frame",
             "-b",
             args.rebuild,
+            "-c",
+            "-nostartfiles",
         ]
         ec = subprocess.call(args_pp)
         return ec
