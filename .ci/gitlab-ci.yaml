@@ -22,8 +22,6 @@ build-images:
   tags:
     - shell-exec
   script:
-    # acquire gtirb artifacts
-    - curl -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=python-wheel --output gtirb-python-wheel.zip
     # run docker
     - docker build -t $FORMATTER_IMAGE_NAME -f .ci/Dockerfile.formatter .
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
