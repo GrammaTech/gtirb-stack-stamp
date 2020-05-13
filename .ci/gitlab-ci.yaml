@@ -5,7 +5,6 @@ variables:
   GIT_STRATEGY: fetch
   FORMATTER_IMAGE_NAME: '${DOCKER_REGISTRY}/${CI_PROJECT_PATH}/formatter'
   BUILD_IMAGE_NAME: '${DOCKER_REGISTRY}/${CI_PROJECT_PATH}/build'
-  GTIRB_BRANCH: master
 
 stages:
   - build-images

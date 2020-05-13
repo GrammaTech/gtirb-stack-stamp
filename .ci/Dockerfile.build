@@ -4,6 +4,7 @@ RUN apt-get install -y python3-pip && \
     python3 -m pip install --upgrade setuptools wheel
 
 # Install GTIRB Python API
+ARG GTIRB_BRANCH=master
 RUN wget -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=python-wheel -O gtirb-python-wheel.zip \
     && unzip -o gtirb-python-wheel.zip \
     && pip3 install *.whl \
