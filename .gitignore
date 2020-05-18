@@ -3,6 +3,7 @@ __pycache__/
 /.vscode/
 .mypy_cache/
 /gtirb_stack_stamp.egg-info/
+/build/
 
 *.fasl
 
