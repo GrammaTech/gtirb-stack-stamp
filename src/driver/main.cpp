@@ -191,23 +191,26 @@ public:
        return std::string(res.str().c_str());
     }
 
-    encoding_t* make_asm(IR *ir, const char* inst_stmts) {
-        encoding_t *encoding;
-        size_t encoding_nbytes, stmt_cnt;
+    // Returns the stmt count assembled, 0 on error
+    size_t make_asm(IR *ir, const char* inst_stmts,
+        encoding_t **encoding, size_t *encoding_nbytes) {
+        size_t stmt_cnt;
 
-        int res = ks_asm(ks_handle_, "xorl $0x85,(%rsp);xorl $0xaa,4(%rsp);\n",
-            0, &encoding, &encoding_nbytes, &stmt_cnt);
+        /* int res = ks_asm(ks_handle_, "xorl $0x85,(%rsp);xorl $0xaa,4(%rsp);\n", */
+        /*     0, encoding, encoding_nbytes, &stmt_cnt); */
+        int res = ks_asm(ks_handle_, inst_stmts, 0,
+            encoding, encoding_nbytes, &stmt_cnt);
         if (res != 0){
             std::cout << "err: " << ks_strerror(ks_errno(ks_handle_)) << std::endl;
-            return NULL;
+            return 0;
         }
         else {
-            std::cout << "stmts: " << stmt_cnt << " nbytes: " << encoding_nbytes
+            std::cout << "stmts: " << stmt_cnt << " nbytes: " << *encoding_nbytes
                 << std::endl;
-            std::string my_encoding = to_hex(encoding, encoding_nbytes);
+            std::string my_encoding = to_hex(*encoding, *encoding_nbytes);
             std::cout << "My encoding: " << my_encoding << std::endl;
-            encoding_mem.push_back(encoding);
-            return encoding;
+            encoding_mem.push_back(*encoding);
+            return stmt_cnt;
         }
     }
 
@@ -269,6 +272,35 @@ public:
             s->setReferent(new_cb);
     }
 
+    void modify_block_insert(
+        Context &ctx, Module &m, CodeBlock *cb,
+        encoding_t* new_bytes, size_t nbytes, size_t offset)
+    {
+        std::vector<uint8_t> new_bytes_vect;
+
+        for (int i ; i < nbytes ; i++)
+            new_bytes_vect.push_back(new_bytes[i]);
+
+        ByteInterval *bi = cb->getByteInterval();
+        auto pos = bi->bytes_begin<uint8_t>();
+        for (int i ; i < offset ; i++)
+            pos++;
+
+        bi->insertBytes<uint8_t>(pos, new_bytes_vect.begin(), new_bytes_vect.end());
+        //
+        // move symbolic expressions that occur after insertion point
+        auto sym_expr_range =
+          bi->findSymbolicExpressionsAtOffset( offset, bi->getSize());
+        std::list<ByteInterval::SymbolicExpressionElement*> ses_to_move;
+        for (auto se : sym_expr_range )
+            ses_to_move.push_back(&se);
+        for (auto se : ses_to_move) {
+            auto offset = se->getOffset();
+            bi->removeSymbolicExpression(offset);
+            bi->addSymbolicExpression(offset+nbytes, se->getSymbolicExpression());
+        }
+    }
+
 protected:
     std::list<encoding_t*> encoding_mem;
     csh cs_handle_;
@@ -319,6 +351,12 @@ int main(int argc, char** argv)
         gtirb::IR* ir = gtirb::IR::load(ctx, in);
         in.close();
 
+        rw_ctx.prepare_for_rewriting(ctx, ir);
+        RewritingContext::encoding_t *data;
+        size_t nbytes;
+        int nstmts = rw_ctx.make_asm(ir,
+            "xorl $0x85,(%rsp);xorl $0xaa,4(%rsp);\n", &data, &nbytes);
+
         for ( auto m = ir->modules_begin(); m != ir->modules_end(); m++)
         {
 
@@ -331,11 +369,12 @@ int main(int argc, char** argv)
                                     block_uuid));
                     rw_ctx.show_asm(block);
                 }
+                if (f->get_name() == "main") {
+                    rw_ctx.modify_block_insert(ctx, m,
+                        *(f->entry_blocks.begin()), data, nbytes, 0);
+                }
             }
         }
-
-        /* rw_ctx.make_asm(ir, NULL); */
-        rw_ctx.prepare_for_rewriting(ctx, ir);
 
         std::ofstream out_gtirb(irPath.string()+".gtirb");
         ir->save(out_gtirb);
