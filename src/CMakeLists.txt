@@ -28,6 +28,7 @@ target_link_libraries(
          ${Boost_LIBRARIES}
          ${CAPSTONE}
          ${KEYSTONE}
+         gtirb
 )
 
 # build driver

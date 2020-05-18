@@ -18,3 +18,10 @@ repos:
       - id: lisp-format
         name: lisp-format
         args: [-style=file]
+  - repo: local
+    hooks:
+      - id: clang-format
+        name: clang-format
+        language: system
+        files: \.(c|h|cpp|hpp)$
+        entry: clang-format -i
