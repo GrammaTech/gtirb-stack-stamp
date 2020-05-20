@@ -9,7 +9,7 @@ include(CheckIncludeFile)
 # Build options
 # ---------------------------------------------------------------------------
 
-option(GTIRB_STACK_STAMP_STACK_STAMP_ENABLE_TESTS "Enable building and running unit tests." ON)
+option(GTIRB_STACK_STAMP_ENABLE_TESTS "Enable building and running unit tests." ON)
 
 # This just sets the builtin BUILD_SHARED_LIBS, but if defaults to ON instead of
 # OFF.
@@ -165,3 +165,7 @@ find_package(gtirb REQUIRED)
 # Sources
 # ---------------------------------------------------------------------------
 add_subdirectory(src)
+
+if(GTIRB_STACK_STAMP_ENABLE_TESTS)
+  add_subdirectory(tests)
+endif()
