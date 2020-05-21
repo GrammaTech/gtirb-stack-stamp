@@ -54,9 +54,10 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
 
   unsigned char* Bytes;
   size_t BytesLen, StatCount;
-  auto KSRes = ks_asm(Keystone, InsnsStr.c_str(), static_cast<uint64_t>(Addr),
-                      &Bytes, &BytesLen, &StatCount);
-  assert(KSRes == 0);
+  [[maybe_unused]] auto KSRes =
+      ks_asm(Keystone, InsnsStr.c_str(), static_cast<uint64_t>(Addr), &Bytes,
+             &BytesLen, &StatCount);
+  assert(KSRes == KS_ERR_OK);
 
   // modify contents
   BI.insertBytes<unsigned char>(BI.bytes_begin<unsigned char>() + Offset, Bytes,
