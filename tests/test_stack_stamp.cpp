@@ -34,6 +34,10 @@ TEST_F(GtirbStackStampFixture, TestInsertInstructions) {
   auto* M = IR->addModule(Ctx);
   auto* S = M->addSection(Ctx, ".text");
   auto* BI = S->addByteInterval(Ctx, BIContents.begin(), BIContents.end());
+  auto* B1 = BI->addBlock<gtirb::CodeBlock>(Ctx, 0, 3);
+  auto* B2 = BI->addBlock<gtirb::CodeBlock>(Ctx, 2, 4);
+  auto* B3 = BI->addBlock<gtirb::CodeBlock>(Ctx, 4, 2);
+  auto* B4 = BI->addBlock<gtirb::CodeBlock>(Ctx, 6, 1);
 
   gtirb_stack_stamp::StackStamper SS{Ctx};
   SS.insertInstructions(*BI, 4, InstructionsToInsert);
@@ -41,4 +45,13 @@ TEST_F(GtirbStackStampFixture, TestInsertInstructions) {
   ASSERT_EQ(std::string(BI->bytes_begin<char>(), BI->bytes_end<char>()),
             BIContents.substr(0, 4) + std::string(Bytes, Bytes + BytesLen) +
                 BIContents.substr(4, 4));
+
+  ASSERT_EQ(B1->getOffset(), 0);
+  ASSERT_EQ(B1->getSize(), 3);
+  ASSERT_EQ(B2->getOffset(), 2);
+  ASSERT_EQ(B2->getSize(), 4 + BytesLen);
+  ASSERT_EQ(B3->getOffset(), 4);
+  ASSERT_EQ(B3->getSize(), 2 + BytesLen);
+  ASSERT_EQ(B4->getOffset(), 6 + BytesLen);
+  ASSERT_EQ(B4->getSize(), 1);
 }

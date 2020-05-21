@@ -10,7 +10,7 @@ static void modifyBlock(BlockType& Block, uint64_t Offset, uint64_t Size) {
   auto BlockOff = Block.getOffset();
   auto BlockSize = Block.getSize();
 
-  if (BlockOff <= Offset && BlockOff + BlockSize < Offset) {
+  if (BlockOff <= Offset && BlockOff + BlockSize > Offset) {
     // increase in size any blocks that intersect with the new bytes
     Block.setSize(BlockSize + Size);
   } else if (BlockOff >= Offset) {
