@@ -38,6 +38,9 @@ TEST_F(GtirbStackStampFixture, TestInsertInstructions) {
   auto* B2 = BI->addBlock<gtirb::CodeBlock>(Ctx, 2, 4);
   auto* B3 = BI->addBlock<gtirb::CodeBlock>(Ctx, 4, 2);
   auto* B4 = BI->addBlock<gtirb::CodeBlock>(Ctx, 6, 1);
+  BI->addSymbolicExpression<gtirb::SymAddrConst>(2, 0, nullptr);
+  BI->addSymbolicExpression<gtirb::SymAddrConst>(4, 0, nullptr);
+  BI->addSymbolicExpression<gtirb::SymAddrConst>(6, 0, nullptr);
 
   gtirb_stack_stamp::StackStamper SS{Ctx};
   SS.insertInstructions(*BI, 4, InstructionsToInsert);
@@ -54,4 +57,15 @@ TEST_F(GtirbStackStampFixture, TestInsertInstructions) {
   ASSERT_EQ(B3->getSize(), 2 + BytesLen);
   ASSERT_EQ(B4->getOffset(), 6 + BytesLen);
   ASSERT_EQ(B4->getSize(), 1);
+
+  ASSERT_EQ(std::distance(BI->symbolic_expressions_begin(),
+                          BI->symbolic_expressions_end()),
+            3);
+  std::set<uint64_t> Offsets{{2, 4 + BytesLen, 6 + BytesLen}};
+  const auto Pred = [&Offsets](uint64_t Off) { return Offsets.count(Off); };
+
+  for (auto SEE : BI->symbolic_expressions()) {
+    ASSERT_PRED1(Pred, SEE.getOffset());
+    Offsets.erase(SEE.getOffset());
+  }
 }

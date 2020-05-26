@@ -85,8 +85,9 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
       BI.symbolic_expressions_begin(), BI.symbolic_expressions_end()};
   for (auto& SEE : SEEs) {
     if (SEE.getOffset() >= Offset) {
-      BI.removeSymbolicExpression(Offset);
-      BI.addSymbolicExpression(Offset + BytesLen, SEE.getSymbolicExpression());
+      BI.removeSymbolicExpression(SEE.getOffset());
+      BI.addSymbolicExpression(SEE.getOffset() + BytesLen,
+                               SEE.getSymbolicExpression());
     }
   }
 }
