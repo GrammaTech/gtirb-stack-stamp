@@ -50,6 +50,7 @@ TEST_F(GtirbStackStampFixture, TestInsertInstructions) {
   ASSERT_EQ(std::string(BI->bytes_begin<char>(), BI->bytes_end<char>()),
             BIContents.substr(0, 4) + std::string(Bytes, Bytes + BytesLen) +
                 BIContents.substr(4, 4));
+  ASSERT_EQ(std::distance(BI->blocks_begin(), BI->blocks_end()), 4);
 
   ASSERT_EQ(B1->getOffset(), 0);
   ASSERT_EQ(B1->getSize(), 3);
