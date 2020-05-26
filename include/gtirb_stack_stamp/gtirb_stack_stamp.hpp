@@ -38,7 +38,7 @@ private:
   ks_engine* Keystone;
 };
 
-void stackStamp(gtirb::Context Ctx, gtirb::Module& M);
+void stackStamp(gtirb::Context& Ctx, gtirb::Module& M);
 void registerAuxDataSchema();
 
 } // namespace gtirb_stack_stamp

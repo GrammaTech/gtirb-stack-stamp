@@ -149,7 +149,7 @@ void gtirb_stack_stamp::StackStamper::stackStampFunction(
   }
 }
 
-void gtirb_stack_stamp::stackStamp(gtirb::Context Ctx, gtirb::Module& M) {
+void gtirb_stack_stamp::stackStamp(gtirb::Context& Ctx, gtirb::Module& M) {
   gtirb_stack_stamp::StackStamper SS{Ctx};
   if (const auto* Functions = M.getAuxData<gtirb::schema::FunctionBlocks>()) {
     for (const auto& [FnId, _] : *Functions) {

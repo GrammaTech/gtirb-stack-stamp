@@ -1,3 +1,5 @@
+#include <boost/filesystem.hpp>
+#include <cstdlib>
 #include <gtest/gtest.h>
 #include <gtirb_stack_stamp/gtirb_stack_stamp.hpp>
 
@@ -68,4 +70,52 @@ TEST_F(GtirbStackStampFixture, TestInsertInstructions) {
     ASSERT_PRED1(Pred, SEE.getOffset());
     Offsets.erase(SEE.getOffset());
   }
+}
+
+TEST_F(GtirbStackStampFixture, TestStackStamp) {
+  boost::filesystem::current_path("tests");
+  std::remove("factorial.gtirb.stamp");
+  std::remove("factorial.stamp");
+
+  ASSERT_EQ(std::system("make factorial -B"), EXIT_SUCCESS);
+  ASSERT_EQ(std::system("ddisasm factorial --ir factorial.gtirb"),
+            EXIT_SUCCESS);
+
+  gtirb::Context Ctx;
+  gtirb::IR* Ir;
+  {
+    std::ifstream File{"factorial.gtirb"};
+    auto ErrorOrIr = gtirb::IR::load(Ctx, File);
+    ASSERT_TRUE(ErrorOrIr);
+    Ir = *ErrorOrIr;
+  }
+
+  for (auto& M : Ir->modules()) {
+    gtirb_stack_stamp::stackStamp(Ctx, M);
+  }
+
+  {
+    std::ofstream File{"factorial.gtirb.stamp"};
+    Ir->save(File);
+    ASSERT_TRUE(File);
+  }
+
+  ASSERT_EQ(std::system("gtirb-pprinter factorial.gtirb.stamp --binary "
+                        "factorial.stamp --keep-all --skip-section .eh_frame "
+                        "-c -nostartfiles"),
+            EXIT_SUCCESS);
+
+  auto* TempFile = std::tmpnam(nullptr);
+  auto ReturnCode =
+      std::system(("./factorial.stamp 10 > " + std::string{TempFile}).c_str());
+  std::string Output;
+  {
+    std::ifstream File{TempFile};
+    std::noskipws(File);
+    File >> Output;
+  }
+  std::remove(TempFile);
+
+  ASSERT_EQ(ReturnCode, EXIT_SUCCESS);
+  ASSERT_EQ(Output, "Factorial(10)=3628800");
 }
