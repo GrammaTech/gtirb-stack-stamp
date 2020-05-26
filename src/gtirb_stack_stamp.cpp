@@ -124,10 +124,29 @@ void gtirb_stack_stamp::StackStamper::stackStampExitBlock(
 
 void gtirb_stack_stamp::StackStamper::stackStampFunction(
     gtirb::Module& M, const gtirb::UUID& FunctionId) {
+  // get aux data
   const auto* AllBlocks = M.getAuxData<gtirb::schema::FunctionBlocks>();
   const auto* AllEntries = M.getAuxData<gtirb::schema::FunctionEntries>();
 
   if (!AllBlocks || !AllEntries) {
+    return;
+  }
+
+  // if there are no entrance or exit blocks, don't add either
+  if (AllEntries->at(FunctionId).empty()) {
+    return;
+  }
+
+  std::vector<gtirb::CodeBlock*> ExitBlocks;
+  auto& Cfg = M.getIR()->getCFG();
+  for (const auto& BlockId : AllBlocks->at(FunctionId)) {
+    auto& Block = *cast<gtirb::CodeBlock>(gtirb::Node::getByUUID(Ctx, BlockId));
+    auto OutEdges = boost::out_edges(blockToCFGIndex(Cfg, &Block), Cfg);
+    if (OutEdges.first != OutEdges.second) {
+      ExitBlocks.push_back(&Block);
+    }
+  }
+  if (ExitBlocks.empty()) {
     return;
   }
 
@@ -139,13 +158,8 @@ void gtirb_stack_stamp::StackStamper::stackStampFunction(
   }
 
   // handle exit blocks
-  auto& Cfg = M.getIR()->getCFG();
-  for (const auto& BlockId : AllBlocks->at(FunctionId)) {
-    auto& Block = *cast<gtirb::CodeBlock>(gtirb::Node::getByUUID(Ctx, BlockId));
-    auto OutEdges = boost::out_edges(blockToCFGIndex(Cfg, &Block), Cfg);
-    if (OutEdges.first != OutEdges.second) {
-      stackStampExitBlock(FunctionId, Block);
-    }
+  for (auto* Block : ExitBlocks) {
+    stackStampExitBlock(FunctionId, *Block);
   }
 }
 
