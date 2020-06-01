@@ -14,6 +14,7 @@ import random
 import logging
 from gtirb_functions import Function
 from gtirb_capstone import RewritingContext
+from gtirb_capstone.instructions import GtirbInstructionDecoder
 
 
 def get_function_stamp_value(func):
@@ -54,11 +55,10 @@ def stamp_function(module, func, ctx, logger=logging.Logger("null")):
 
     logger.debug("- Exit blocks")
     for b in func.get_exit_blocks():
-        bytes = b.byte_interval.contents[b.offset : b.offset + b.size]
         offset = 0
         # Find the offset of the ret instruction, and insert our bytes just
         # before.
-        for i in ctx.cp.disasm(bytes, 0):
+        for i in GtirbInstructionDecoder(module.isa).get_instructions(b):
             if i.mnemonic == "ret":
                 ctx.modify_block_insert(
                     module, b, encoding, offset, logger=logger
