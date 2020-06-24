@@ -100,14 +100,15 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
   }
 
   // modify symbolic expressions
-  std::vector<gtirb::ByteInterval::SymbolicExpressionElement> SEEs{
-      BI.symbolic_expressions_begin(), BI.symbolic_expressions_end()};
-  for (auto& SEE : SEEs) {
+  std::vector<std::tuple<uint64_t, gtirb::SymbolicExpression>> SEEs;
+  for (const auto SEE : BI.symbolic_expressions()) {
     if (SEE.getOffset() >= Offset) {
-      auto SymExpr = SEE.getSymbolicExpression();
+      SEEs.emplace_back(SEE.getOffset(), SEE.getSymbolicExpression());
       BI.removeSymbolicExpression(SEE.getOffset());
-      BI.addSymbolicExpression(SEE.getOffset() + BytesLen, SymExpr);
     }
+  }
+  for (const auto& SEE : SEEs) {
+    BI.addSymbolicExpression(std::get<0>(SEE) + BytesLen, std::get<1>(SEE));
   }
 
   // modify any affected aux data
