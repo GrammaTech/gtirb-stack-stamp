@@ -105,6 +105,7 @@ TEST_F(GtirbStackStampFixture, TestStackStamp) {
                         "factorial.stamp --keep-all --skip-section .eh_frame "
                         "-c -nostartfiles"),
             EXIT_SUCCESS);
+  ASSERT_TRUE(boost::filesystem::exists("factorial.stamp"));
 
   auto* TempFile = std::tmpnam(nullptr);
   auto ReturnCode =

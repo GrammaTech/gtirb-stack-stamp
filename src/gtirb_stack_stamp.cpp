@@ -104,9 +104,9 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
       BI.symbolic_expressions_begin(), BI.symbolic_expressions_end()};
   for (auto& SEE : SEEs) {
     if (SEE.getOffset() >= Offset) {
+      auto SymExpr = SEE.getSymbolicExpression();
       BI.removeSymbolicExpression(SEE.getOffset());
-      BI.addSymbolicExpression(SEE.getOffset() + BytesLen,
-                               SEE.getSymbolicExpression());
+      BI.addSymbolicExpression(SEE.getOffset() + BytesLen, SymExpr);
     }
   }
 
@@ -120,7 +120,8 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
           gtirb::Node::getByUUID(Ctx, BlockOffset.ElementId));
       if (CB->getByteInterval() != &BI ||
           CB->getOffset() + BlockOffset.Displacement < Offset ||
-          CB->getOffset() + BlockOffset.Displacement >= Offset + BytesLen) {
+          !(CB->getOffset() <= Offset &&
+            CB->getOffset() + CB->getSize() > Offset)) {
         NewCFIs[BlockOffset] = Directive;
       } else {
         auto NewOffset = BlockOffset;
