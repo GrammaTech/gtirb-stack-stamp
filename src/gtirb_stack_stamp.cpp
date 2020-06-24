@@ -5,6 +5,25 @@
 #include <random>
 #include <sstream>
 
+namespace gtirb {
+namespace schema {
+
+struct CfiDirectives {
+  static constexpr const char* Name = "cfiDirectives";
+  typedef std::map<
+      gtirb::Offset,
+      std::vector<std::tuple<std::string, std::vector<int64_t>, gtirb::UUID>>>
+      Type;
+};
+
+struct SymbolicExpressionSizes {
+  static constexpr const char* Name = "symbolicExpressionSizes";
+  typedef std::map<gtirb::Offset, uint64_t> Type;
+};
+
+} // namespace schema
+} // namespace gtirb
+
 template <typename BlockType>
 static void modifyBlock(BlockType& Block, uint64_t Offset, uint64_t Size) {
   auto BlockOff = Block.getOffset();
@@ -89,6 +108,48 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
       BI.addSymbolicExpression(SEE.getOffset() + BytesLen,
                                SEE.getSymbolicExpression());
     }
+  }
+
+  // modify any affected aux data
+  if (const auto* CFIs = BI.getSection()
+                             ->getModule()
+                             ->getAuxData<gtirb::schema::CfiDirectives>()) {
+    gtirb::schema::CfiDirectives::Type NewCFIs;
+    for (const auto& [BlockOffset, Directive] : *CFIs) {
+      const auto* CB = cast<gtirb::CodeBlock>(
+          gtirb::Node::getByUUID(Ctx, BlockOffset.ElementId));
+      if (CB->getByteInterval() != &BI ||
+          CB->getOffset() + BlockOffset.Displacement < Offset ||
+          CB->getOffset() + BlockOffset.Displacement >= Offset + BytesLen) {
+        NewCFIs[BlockOffset] = Directive;
+      } else {
+        auto NewOffset = BlockOffset;
+        NewOffset.Displacement += BytesLen;
+        NewCFIs[NewOffset] = Directive;
+      }
+    }
+    BI.getSection()->getModule()->addAuxData<gtirb::schema::CfiDirectives>(
+        std::move(NewCFIs));
+  }
+
+  if (const auto* SymExprSizes =
+          BI.getSection()
+              ->getModule()
+              ->getAuxData<gtirb::schema::SymbolicExpressionSizes>()) {
+    gtirb::schema::SymbolicExpressionSizes::Type NewSES;
+    for (const auto& [BIOffset, Size] : *SymExprSizes) {
+      if (BIOffset.ElementId != BI.getUUID() ||
+          BIOffset.Displacement < Offset) {
+        NewSES[BIOffset] = Size;
+      } else {
+        auto NewOffset = BIOffset;
+        NewOffset.Displacement += BytesLen;
+        NewSES[NewOffset] = Size;
+      }
+    }
+    BI.getSection()
+        ->getModule()
+        ->addAuxData<gtirb::schema::SymbolicExpressionSizes>(std::move(NewSES));
   }
 }
 
@@ -177,4 +238,7 @@ void gtirb_stack_stamp::registerAuxDataSchema() {
   gtirb::AuxDataContainer::registerAuxDataType<gtirb::schema::FunctionBlocks>();
   gtirb::AuxDataContainer::registerAuxDataType<
       gtirb::schema::FunctionEntries>();
+  gtirb::AuxDataContainer::registerAuxDataType<gtirb::schema::CfiDirectives>();
+  gtirb::AuxDataContainer::registerAuxDataType<
+      gtirb::schema::SymbolicExpressionSizes>();
 }
