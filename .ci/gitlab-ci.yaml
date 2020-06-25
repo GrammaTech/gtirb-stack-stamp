@@ -55,6 +55,17 @@ test-common-lisp:
     - sbcl --eval '(ql:quickload :gtirb-stack-stamp)' --eval '(asdf:make :gtirb-stack-stamp :type :program :monolithic t)'
     - ./stack-stamp --help
 
+test-cpp:
+  stage: test
+  tags:
+    - docker-exec
+  image: $BUILD_IMAGE_NAME
+  script:
+    - cmake ./ -Bbuild -DCMAKE_BUILD_TYPE=Debug
+    - cd build
+    - make -j8
+    - bin/test-gtirb-stack-stamp
+
 build:
   stage: build
   tags:
