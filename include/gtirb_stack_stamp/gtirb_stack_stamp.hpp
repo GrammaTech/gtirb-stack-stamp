@@ -32,6 +32,8 @@ public:
                            gtirb::CodeBlock& Block);
   void stackStampFunction(gtirb::Module& M, const gtirb::UUID& FunctionId);
 
+  bool isExitBlock(const gtirb::CodeBlock& Block);
+
 private:
   gtirb::Context& Ctx;
   csh Capstone;

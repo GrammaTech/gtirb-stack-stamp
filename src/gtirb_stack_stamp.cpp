@@ -38,19 +38,6 @@ static void modifyBlock(BlockType& Block, uint64_t Offset, uint64_t Size) {
   }
 }
 
-static gtirb::CFG::vertex_descriptor blockToCFGIndex(gtirb::CFG& Cfg,
-                                                     gtirb::CodeBlock* B) {
-  auto Pair = boost::vertices(Cfg);
-  for (auto V : boost::make_iterator_range(Pair.first, Pair.second)) {
-    if (Cfg[V] == B) {
-      return V;
-    }
-  }
-
-  assert(!"blockToCFGIndex failed!");
-  return 0;
-}
-
 static std::string getStampAssembly(const gtirb::UUID& FunctionId) {
   uint64_t Seed = 1;
   for (auto Byte : FunctionId) {
@@ -185,6 +172,20 @@ void gtirb_stack_stamp::StackStamper::stackStampExitBlock(
   }
 }
 
+bool gtirb_stack_stamp::StackStamper::isExitBlock(
+    const gtirb::CodeBlock& Block) {
+  gtirb::Addr A{0};
+  if (auto BA = Block.getAddress()) {
+    A = *BA;
+  }
+
+  cs_insn* Insns;
+  auto InsnsLen =
+      cs_disasm(Capstone, Block.rawBytes<uint8_t>(), Block.getSize(),
+                static_cast<uint64_t>(A), 0, &Insns);
+  return Insns[InsnsLen - 1].id == X86_INS_RET;
+}
+
 void gtirb_stack_stamp::StackStamper::stackStampFunction(
     gtirb::Module& M, const gtirb::UUID& FunctionId) {
   // get aux data
@@ -201,11 +202,9 @@ void gtirb_stack_stamp::StackStamper::stackStampFunction(
   }
 
   std::vector<gtirb::CodeBlock*> ExitBlocks;
-  auto& Cfg = M.getIR()->getCFG();
   for (const auto& BlockId : AllBlocks->at(FunctionId)) {
     auto& Block = *cast<gtirb::CodeBlock>(gtirb::Node::getByUUID(Ctx, BlockId));
-    auto OutEdges = boost::out_edges(blockToCFGIndex(Cfg, &Block), Cfg);
-    if (OutEdges.first != OutEdges.second) {
+    if (isExitBlock(Block)) {
       ExitBlocks.push_back(&Block);
     }
   }
