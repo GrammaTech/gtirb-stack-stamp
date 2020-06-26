@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-RUN apt-get update -y && apt-get install -y build-essential curl git \
+RUN apt-get update -y && apt-get install -y build-essential curl cmake git \
         libprotobuf-dev make pkg-config python3-pip python3-protobuf \
         software-properties-common unzip wget
 RUN python3 -m pip install --upgrade setuptools wheel
