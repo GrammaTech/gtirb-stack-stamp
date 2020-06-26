@@ -1,14 +1,34 @@
-FROM docker.grammatech.com/rewriting/ddisasm/ubuntu18-gcc
+FROM ubuntu:18.04
 
 RUN apt-get install -y python3-pip && \
     python3 -m pip install --upgrade setuptools wheel
 
-# Install GTIRB Python API
+# Install GTIRB APIs
 ARG GTIRB_BRANCH=master
-RUN wget -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=python-wheel -O gtirb-python-wheel.zip \
-    && unzip -o gtirb-python-wheel.zip \
-    && pip3 install *.whl \
-    && rm -rf *.whl gtirb-python-wheel.zip
+RUN wget -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=debian-installer-ubuntu18 -O packages.zip \
+    && unzip -o packages.zip \
+    && dpkg -i *.deb \
+    && rm -rf *.deb packages.zip
+
+ARG GTIRB_PPRINTER_BRANCH=master
+RUN wget -L https://git.grammatech.com/rewriting/gtirb-pprinter/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=debian-installer-ubuntu18 -O packages.zip \
+    && unzip -o packages.zip \
+    && dpkg -i *.deb \
+    && rm -rf *.deb packages.zip
+
+ARG DDISASM_BRANCH=master
+RUN wget -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=debian-installer-ubuntu18 -O packages.zip \
+    && unzip -o packages.zip \
+    && dpkg -i *.deb \
+    && rm -rf *.deb packages.zip
+
+# Install Capstone
+RUN cd /usr/local/src \
+    && wget https://github.com/aquynh/capstone/archive/4.0.2.tar.gz \
+    && tar xf 4.0.2.tar.gz \
+    && cd capstone-4.0.2 \
+    && CAPSTONE_ARCHS=x86 ./make.sh \
+    && CAPSTONE_ARCHS=x86 ./make.sh install
 
 # Install Keystone
 RUN git clone https://github.com/keystone-engine/keystone.git && \
