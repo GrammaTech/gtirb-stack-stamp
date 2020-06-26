@@ -11,6 +11,10 @@ RUN add-apt-repository ppa:mhier/libboost-latest && \
     apt-get -y update && \
     apt-get -y install libboost${BOOST_VERSION}-dev
 
+# Install Capstone
+COPY libcapstone-dev_*_amd64.deb /
+RUN dpkg -i libcapstone-dev_*_amd64.deb && rm libcapstone-dev_*_amd64.deb
+
 # Install GTIRB APIs
 ARG GTIRB_BRANCH=master
 RUN wget -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=debian-installer-ubuntu18 -O packages.zip \
@@ -29,14 +33,6 @@ RUN wget -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/${GTIR
     && unzip -o packages.zip \
     && dpkg -i *.deb \
     && rm -rf *.deb packages.zip
-
-# Install Capstone
-RUN cd /usr/local/src \
-    && wget https://github.com/aquynh/capstone/archive/4.0.2.tar.gz \
-    && tar xf 4.0.2.tar.gz \
-    && cd capstone-4.0.2 \
-    && CAPSTONE_ARCHS=x86 ./make.sh \
-    && CAPSTONE_ARCHS=x86 ./make.sh install
 
 # Install Keystone
 RUN git clone https://github.com/keystone-engine/keystone.git && \
