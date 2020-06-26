@@ -66,7 +66,8 @@ test-cpp:
     - cmake ./ -Bbuild -DCMAKE_BUILD_TYPE=Debug
     - cd build
     - make -j8
-    - bin/test-gtirb-stack-stamp
+    - cd ..
+    - build/bin/test-gtirb-stack-stamp
 
 build:
   stage: build
