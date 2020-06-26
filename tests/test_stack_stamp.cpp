@@ -102,9 +102,7 @@ TEST_F(GtirbStackStampFixture, TestStackStamp) {
   }
 
   ASSERT_EQ(std::system("gtirb-pprinter factorial.gtirb.stamp --binary "
-                        "factorial.stamp --keep-all --skip-section "
-                        ".eh_frame_hdr --skip-section .eh_frame -c "
-                        "-nostartfiles"),
+                        "factorial.stamp"),
             EXIT_SUCCESS);
   ASSERT_TRUE(boost::filesystem::exists("factorial.stamp"));
 
