@@ -25,7 +25,9 @@ if(UNIX AND NOT BUILD_SHARED_LIBS)
   add_compile_options(-static)
 endif()
 
+if(GTIRB_STACK_STAMP_ENABLE_TESTS)
 enable_testing()
+endif()
 
 # ---------------------------------------------------------------------------
 # Global settings
@@ -71,8 +73,11 @@ endif()
 #
 # Global Options (Compile / Link)
 #
-add_compile_options(-Wall -Wextra -Wpointer-arith -Wshadow -Werror)
-add_compile_options(-fPIC)
+if((${CMAKE_CXX_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_CXX_COMPILER_ID}
+                                                     STREQUAL Clang))
+  add_compile_options(-Wall -Wextra -Wpointer-arith -Wshadow -Werror)
+  add_compile_options(-fPIC)
+endif()
 
 # ---------------------------------------------------------------------------
 # Boost
@@ -80,9 +85,9 @@ add_compile_options(-fPIC)
 set(BOOST_COMPONENTS filesystem program_options system)
 find_package(Boost 1.67 REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 
-add_compile_options(-DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION)
-add_compile_options(-DBOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE)
-add_compile_options(-DBOOST_SYSTEM_NO_DEPRECATED)
+add_definitions(-DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION)
+add_definitions(-DBOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE)
+add_definitions(-DBOOST_SYSTEM_NO_DEPRECATED)
 
 # Boost versions 1.70.0+ may use Boost's provided CMake support rather than
 # CMake's internal Boost support. The former uses "Boost::boost" and so on,
