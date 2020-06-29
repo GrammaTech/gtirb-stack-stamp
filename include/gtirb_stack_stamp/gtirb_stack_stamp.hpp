@@ -13,7 +13,7 @@ namespace gtirb_stack_stamp {
 /// exit blocks of functions, as a simple example of control-flow integrity.
 class StackStamper {
 public:
-  StackStamper(gtirb::Context& Ctx_) : Ctx{Ctx_} {
+  explicit StackStamper(gtirb::Context& Ctx_) : Ctx{Ctx_} {
     [[maybe_unused]] auto CSRet = cs_open(CS_ARCH_X86, CS_MODE_64, &Capstone);
     assert(CSRet == CS_ERR_OK);
     cs_option(Capstone, CS_OPT_DETAIL, CS_OPT_ON);
