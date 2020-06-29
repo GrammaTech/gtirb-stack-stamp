@@ -52,7 +52,8 @@ static std::string getStampAssembly(const gtirb::UUID& FunctionId) {
 }
 
 void gtirb_stack_stamp::StackStamper::insertInstructions(
-    gtirb::ByteInterval& BI, uint64_t Offset, const std::string& InsnsStr) {
+    gtirb::ByteInterval& BI, uint64_t Offset,
+    const std::string& InsnsStr) const {
   gtirb::Addr Addr{0};
   if (auto BiAddr = BI.getAddress()) {
     Addr = *BiAddr + Offset;
@@ -143,13 +144,13 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
 }
 
 void gtirb_stack_stamp::StackStamper::stackStampEntranceBlock(
-    const gtirb::UUID& FunctionId, gtirb::CodeBlock& Block) {
+    const gtirb::UUID& FunctionId, gtirb::CodeBlock& Block) const {
   insertInstructions(*Block.getByteInterval(), Block.getOffset(),
                      getStampAssembly(FunctionId));
 }
 
 void gtirb_stack_stamp::StackStamper::stackStampExitBlock(
-    const gtirb::UUID& FunctionId, gtirb::CodeBlock& Block) {
+    const gtirb::UUID& FunctionId, gtirb::CodeBlock& Block) const {
   gtirb::Addr A{0};
   if (auto BA = Block.getAddress()) {
     A = *BA;
@@ -173,7 +174,7 @@ void gtirb_stack_stamp::StackStamper::stackStampExitBlock(
 }
 
 bool gtirb_stack_stamp::StackStamper::isExitBlock(
-    const gtirb::CodeBlock& Block) {
+    const gtirb::CodeBlock& Block) const {
   gtirb::Addr A{0};
   if (auto BA = Block.getAddress()) {
     A = *BA;
@@ -187,7 +188,7 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
 }
 
 void gtirb_stack_stamp::StackStamper::stackStampFunction(
-    gtirb::Module& M, const gtirb::UUID& FunctionId) {
+    gtirb::Module& M, const gtirb::UUID& FunctionId) const {
   // get aux data
   const auto* AllBlocks = M.getAuxData<gtirb::schema::FunctionBlocks>();
   const auto* AllEntries = M.getAuxData<gtirb::schema::FunctionEntries>();

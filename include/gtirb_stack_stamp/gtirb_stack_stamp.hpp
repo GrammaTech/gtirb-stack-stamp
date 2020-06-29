@@ -37,7 +37,7 @@ public:
   /// \param Offset The offset into the byte interval to insert code at.
   /// \param InsnsStr A string representing a sequence of assembly instructions.
   void insertInstructions(gtirb::ByteInterval& BI, uint64_t Offset,
-                          const std::string& InsnsStr);
+                          const std::string& InsnsStr) const;
 
   /// \brief Insert stack-stamping instructions into the entrance block of a
   /// function.
@@ -46,7 +46,7 @@ public:
   /// to calculate hash values.
   /// \param Block The code block to insert instructions into.
   void stackStampEntranceBlock(const gtirb::UUID& FunctionId,
-                               gtirb::CodeBlock& Block);
+                               gtirb::CodeBlock& Block) const;
 
   /// \brief Insert stack-stamping instructions into the exit block of a
   /// function, that is, right before a return statement.
@@ -55,17 +55,18 @@ public:
   /// to calculate hash values.
   /// \param Block The code block to insert instructions into.
   void stackStampExitBlock(const gtirb::UUID& FunctionId,
-                           gtirb::CodeBlock& Block);
+                           gtirb::CodeBlock& Block) const;
 
   /// \brief Stack-stamp a function.
   ///
   /// \param M The module that contains the function.
   /// \param FunctionId The UUID of the function to stack-stamp.
-  void stackStampFunction(gtirb::Module& M, const gtirb::UUID& FunctionId);
+  void stackStampFunction(gtirb::Module& M,
+                          const gtirb::UUID& FunctionId) const;
 
   /// \brief Is this code block an exit block; that is, does it end in a
   /// return instruction?
-  bool isExitBlock(const gtirb::CodeBlock& Block);
+  bool isExitBlock(const gtirb::CodeBlock& Block) const;
 
 private:
   gtirb::Context& Ctx;
