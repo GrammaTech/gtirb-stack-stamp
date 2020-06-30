@@ -104,11 +104,15 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
 
   // Modify symbolic expressions.
   std::vector<std::tuple<uint64_t, gtirb::SymbolicExpression>> SEEs;
+  std::vector<uint64_t> RemovedOffsets;
   for (const auto SEE : BI.symbolic_expressions()) {
     if (SEE.getOffset() >= Offset) {
       SEEs.emplace_back(SEE.getOffset(), SEE.getSymbolicExpression());
-      BI.removeSymbolicExpression(SEE.getOffset());
+      RemovedOffsets.push_back(SEE.getOffset());
     }
+  }
+  for (uint64_t Off : RemovedOffsets) {
+    BI.removeSymbolicExpression(Off);
   }
   for (const auto& SEE : SEEs) {
     BI.addSymbolicExpression(std::get<0>(SEE) + BytesLen, std::get<1>(SEE));
