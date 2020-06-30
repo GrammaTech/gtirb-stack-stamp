@@ -24,7 +24,7 @@ RUN unzip -o gtirb-packages.zip \
     && rm -rf *.deb *.zip
 
 # Install Keystone
-COPY keystone/ ./
+COPY keystone/ keystone/
 RUN cd keystone && \
     mkdir build && \
     cd build && \
