@@ -16,31 +16,20 @@ COPY libcapstone-dev_*_amd64.deb /
 RUN dpkg -i libcapstone-dev_*_amd64.deb && rm libcapstone-dev_*_amd64.deb
 
 # Install GTIRB APIs
-ARG GTIRB_BRANCH=master
-RUN wget -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=debian-installer-ubuntu18 -O packages.zip \
-    && unzip -o packages.zip \
+RUN unzip -o gtirb-packages.zip \
+    && unzip -o gtirb-pprinter-packages.zip \
+    && unzip -o ddisasm-packages.zip \
     && dpkg -i *.deb \
-    && rm -rf *.deb packages.zip
-
-ARG GTIRB_PPRINTER_BRANCH=master
-RUN wget -L https://git.grammatech.com/rewriting/gtirb-pprinter/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=debian-installer-ubuntu18 -O packages.zip \
-    && unzip -o packages.zip \
-    && dpkg -i *.deb \
-    && rm -rf *.deb packages.zip
-
-ARG DDISASM_BRANCH=master
-RUN wget -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=debian-installer-ubuntu18 -O packages.zip \
-    && unzip -o packages.zip \
-    && dpkg -i *.deb \
-    && rm -rf *.deb packages.zip
+    && rm -rf *.deb *.zip
 
 # Install Keystone
-RUN git clone https://github.com/keystone-engine/keystone.git && \
-    cd keystone && \
+RUN cd keystone && \
     mkdir build && \
     cd build && \
     ../make-share.sh && \
-    make install
+    make install && \
+    cd .. && \
+    rm -rf keystone
 
 RUN ldconfig /usr/local/lib
 

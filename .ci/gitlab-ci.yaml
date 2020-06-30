@@ -21,8 +21,12 @@ build-images:
   tags:
     - shell-exec
   script:
-    # get capstone package
+    # download packages
     - cp /u4/TARBALLS/debloat/pkgs/libcapstone-dev_4.0.1-gt1_amd64.deb ./
+    - wget -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 -O gtirb-packages.zip
+    - wget -L https://git.grammatech.com/rewriting/gtirb-pprinter/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 -O gtirb-pprinter-packages.zip
+    - wget -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 -O ddisasm-packages.zip
+    - git clone https://github.com/keystone-engine/keystone.git
     # run docker
     - docker build -t $FORMATTER_IMAGE_NAME -f .ci/Dockerfile.formatter .
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
