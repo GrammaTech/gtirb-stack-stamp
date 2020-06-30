@@ -120,12 +120,12 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
                              ->getAuxData<gtirb::schema::CfiDirectives>()) {
     gtirb::schema::CfiDirectives::Type NewCFIs;
     for (const auto& [BlockOffset, Directive] : *CFIs) {
-      const auto* CB = cast<gtirb::CodeBlock>(
+      const auto* CB = dyn_cast_or_null<gtirb::CodeBlock>(
           gtirb::Node::getByUUID(Ctx, BlockOffset.ElementId));
-      if (CB->getByteInterval() != &BI ||
+      if (!CB || CB->getByteInterval() != &BI ||
           CB->getOffset() + BlockOffset.Displacement < Offset ||
-          !(CB->getOffset() <= Offset &&
-            CB->getOffset() + CB->getSize() > Offset)) {
+          CB->getOffset() > Offset ||
+          CB->getOffset() + CB->getSize() <= Offset) {
         NewCFIs[BlockOffset] = Directive;
       } else {
         gtirb::Offset NewOffset = BlockOffset;
@@ -224,9 +224,10 @@ void gtirb_stack_stamp::StackStamper::stampFunction(
 
   std::vector<gtirb::CodeBlock*> ExitBlocks;
   for (const auto& BlockId : AllBlocks->at(FunctionId)) {
-    auto& Block = *cast<gtirb::CodeBlock>(gtirb::Node::getByUUID(Ctx, BlockId));
-    if (isExitBlock(Block)) {
-      ExitBlocks.push_back(&Block);
+    if (auto* Block = dyn_cast_or_null<gtirb::CodeBlock>(
+            gtirb::Node::getByUUID(Ctx, BlockId));
+        Block && isExitBlock(*Block)) {
+      ExitBlocks.push_back(Block);
     }
   }
   if (ExitBlocks.empty()) {
@@ -235,8 +236,10 @@ void gtirb_stack_stamp::StackStamper::stampFunction(
 
   // Handle entrance blocks.
   for (const auto& BlockId : AllEntries->at(FunctionId)) {
-    stampEntranceBlock(FunctionId, *cast<gtirb::CodeBlock>(
-                                       gtirb::Node::getByUUID(Ctx, BlockId)));
+    if (auto* Block = dyn_cast_or_null<gtirb::CodeBlock>(
+            gtirb::Node::getByUUID(Ctx, BlockId))) {
+      stampEntranceBlock(FunctionId, *Block);
+    }
   }
 
   // Handle exit blocks.
