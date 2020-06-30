@@ -17,7 +17,6 @@
 
 #include <capstone/x86.h>
 #include <ios>
-#include <random>
 #include <sstream>
 
 namespace gtirb {
