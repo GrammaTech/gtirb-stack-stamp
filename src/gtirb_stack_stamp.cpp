@@ -252,7 +252,8 @@ void gtirb_stack_stamp::stamp(gtirb::Context& Ctx, gtirb::Module& M) {
   gtirb_stack_stamp::StackStamper SS{Ctx};
   if (const auto* Functions = M.getAuxData<gtirb::schema::FunctionBlocks>()) {
     for (const auto& [FnId, _] : *Functions) {
-      (void)_;
+      (void)_; // This line is necesary so GCC compilers <= 7 don't complain
+               // about unused variables.
       SS.stampFunction(M, FnId);
     }
   }
