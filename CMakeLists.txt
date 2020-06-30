@@ -1,5 +1,6 @@
 # Need 3.10 to support CXX_STANDARD=17
 cmake_minimum_required(VERSION 3.10.0)
+project(gtirb-stack-stamp)
 
 include(CheckFunctionExists)
 include(CheckCXXSourceCompiles)

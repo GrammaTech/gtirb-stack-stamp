@@ -1,5 +1,3 @@
-set(PROJECT_NAME gtirb-stack-stamp)
-
 if((${CMAKE_CXX_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_CXX_COMPILER_ID}
                                                      STREQUAL Clang))
   add_compile_options(-mtune=generic)
