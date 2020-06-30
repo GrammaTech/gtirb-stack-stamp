@@ -51,15 +51,17 @@ static void modifyBlock(BlockType& Block, uint64_t Offset, uint64_t Size) {
 }
 
 static std::string getStampAssembly(const gtirb::UUID& FunctionId) {
-  uint64_t Seed = 1;
-  for (uint8_t Byte : FunctionId) {
-    Seed *= Byte;
-  }
-  std::mt19937_64 Rng{Seed};
+  // All that matters for these two numbers is that they are the same given the
+  // same function UUID. Thus, we just take the UUID's 128-bit contents and
+  // convert it into two 64-bit numbers.
+  std::array<uint8_t, 16> Bytes;
+  std::copy(FunctionId.begin(), FunctionId.end(), Bytes.begin());
+  uint64_t Num1 = *reinterpret_cast<uint64_t*>(Bytes.data()),
+           Num2 = *(reinterpret_cast<uint64_t*>(Bytes.data()) + 1);
 
   std::ostringstream ss;
-  ss << "xorl $0x" << std::hex << Rng() << ",(%rsp); xorl $0x" << std::hex
-     << Rng() << ",4(%rsp);";
+  ss << "xorl $0x" << std::hex << Num1 << ",(%rsp); xorl $0x" << std::hex
+     << Num2 << ",4(%rsp);";
   return ss.str();
 }
 
