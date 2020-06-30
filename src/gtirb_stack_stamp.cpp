@@ -169,7 +169,7 @@ void gtirb_stack_stamp::StackStamper::stampExitBlock(
   }
 
   cs_insn* Insns;
-  auto InsnsLen =
+  size_t InsnsLen =
       cs_disasm(Capstone, Block.rawBytes<uint8_t>(), Block.getSize(),
                 static_cast<uint64_t>(A), 0, &Insns);
   uint64_t Offset = Block.getOffset();
