@@ -105,7 +105,7 @@ TEST_F(GtirbStackStampFixture, TestStackStamp) {
   }
 
   for (auto& M : Ir->modules()) {
-    gtirb_stack_stamp::stackStamp(Ctx, M);
+    gtirb_stack_stamp::stamp(Ctx, M);
   }
 
   {

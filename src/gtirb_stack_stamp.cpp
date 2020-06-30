@@ -156,13 +156,13 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
   }
 }
 
-void gtirb_stack_stamp::StackStamper::stackStampEntranceBlock(
+void gtirb_stack_stamp::StackStamper::stampEntranceBlock(
     const gtirb::UUID& FunctionId, gtirb::CodeBlock& Block) const {
   insertInstructions(*Block.getByteInterval(), Block.getOffset(),
                      getStampAssembly(FunctionId));
 }
 
-void gtirb_stack_stamp::StackStamper::stackStampExitBlock(
+void gtirb_stack_stamp::StackStamper::stampExitBlock(
     const gtirb::UUID& FunctionId, gtirb::CodeBlock& Block) const {
   gtirb::Addr A{0};
   if (auto BA = Block.getAddress()) {
@@ -200,7 +200,7 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
   return Insns[InsnsLen - 1].id == X86_INS_RET;
 }
 
-void gtirb_stack_stamp::StackStamper::stackStampFunction(
+void gtirb_stack_stamp::StackStamper::stampFunction(
     gtirb::Module& M, const gtirb::UUID& FunctionId) const {
   // get aux data
   const auto* AllBlocks = M.getAuxData<gtirb::schema::FunctionBlocks>();
@@ -228,23 +228,22 @@ void gtirb_stack_stamp::StackStamper::stackStampFunction(
 
   // handle entrance blocks
   for (const auto& BlockId : AllEntries->at(FunctionId)) {
-    stackStampEntranceBlock(
-        FunctionId,
-        *cast<gtirb::CodeBlock>(gtirb::Node::getByUUID(Ctx, BlockId)));
+    stampEntranceBlock(FunctionId, *cast<gtirb::CodeBlock>(
+                                       gtirb::Node::getByUUID(Ctx, BlockId)));
   }
 
   // handle exit blocks
   for (auto* Block : ExitBlocks) {
-    stackStampExitBlock(FunctionId, *Block);
+    stampExitBlock(FunctionId, *Block);
   }
 }
 
-void gtirb_stack_stamp::stackStamp(gtirb::Context& Ctx, gtirb::Module& M) {
+void gtirb_stack_stamp::stamp(gtirb::Context& Ctx, gtirb::Module& M) {
   gtirb_stack_stamp::StackStamper SS{Ctx};
   if (const auto* Functions = M.getAuxData<gtirb::schema::FunctionBlocks>()) {
     for (const auto& [FnId, _] : *Functions) {
       (void)_;
-      SS.stackStampFunction(M, FnId);
+      SS.stampFunction(M, FnId);
     }
   }
 }

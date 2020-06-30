@@ -73,7 +73,7 @@ int main(int ArgC, char** ArgV) {
   for (auto& M : Ir->modules()) {
     std::cout << "Stack stamping module '" << M.getBinaryPath() << "'..."
               << std::endl;
-    gtirb_stack_stamp::stackStamp(Ctx, M);
+    gtirb_stack_stamp::stamp(Ctx, M);
   }
 
   boost::filesystem::path OutputPath = VM["out"].as<std::string>();

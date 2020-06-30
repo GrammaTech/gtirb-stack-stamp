@@ -61,8 +61,8 @@ public:
   /// \param FunctionId The UUID of the function we are stack-stamping. Used
   /// to calculate hash values.
   /// \param Block The code block to insert instructions into.
-  void stackStampEntranceBlock(const gtirb::UUID& FunctionId,
-                               gtirb::CodeBlock& Block) const;
+  void stampEntranceBlock(const gtirb::UUID& FunctionId,
+                          gtirb::CodeBlock& Block) const;
 
   /// \brief Insert stack-stamping instructions into the exit block of a
   /// function, that is, right before a return statement.
@@ -70,15 +70,14 @@ public:
   /// \param FunctionId The UUID of the function we are stack-stamping. Used
   /// to calculate hash values.
   /// \param Block The code block to insert instructions into.
-  void stackStampExitBlock(const gtirb::UUID& FunctionId,
-                           gtirb::CodeBlock& Block) const;
+  void stampExitBlock(const gtirb::UUID& FunctionId,
+                      gtirb::CodeBlock& Block) const;
 
   /// \brief Stack-stamp a function.
   ///
   /// \param M The module that contains the function.
   /// \param FunctionId The UUID of the function to stack-stamp.
-  void stackStampFunction(gtirb::Module& M,
-                          const gtirb::UUID& FunctionId) const;
+  void stampFunction(gtirb::Module& M, const gtirb::UUID& FunctionId) const;
 
   /// \brief Is this code block an exit block; that is, does it end in a
   /// return instruction?
@@ -94,7 +93,7 @@ private:
 ///
 /// \param Ctx the context that the module was created from.
 /// \param M The module to stack-stamp.
-void stackStamp(gtirb::Context& Ctx, gtirb::Module& M);
+void stamp(gtirb::Context& Ctx, gtirb::Module& M);
 
 /// \brief Registers all auxillary data schema needed by this file.
 /// Call this function before any usages of the GTIRB API.
