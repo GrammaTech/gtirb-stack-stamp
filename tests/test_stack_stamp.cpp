@@ -11,10 +11,11 @@ reflect the position or policy of the Government and no official
 endorsement should be inferred.
 *******************************************************************************/
 
+#include "gtirb_stack_stamp/gtirb_stack_stamp.hpp"
+
 #include <boost/filesystem.hpp>
 #include <cstdlib>
 #include <gtest/gtest.h>
-#include <gtirb_stack_stamp/gtirb_stack_stamp.hpp>
 
 static bool alreadySetUp = false;
 

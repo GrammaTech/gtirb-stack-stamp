@@ -11,7 +11,7 @@ reflect the position or policy of the Government and no official
 endorsement should be inferred.
 *******************************************************************************/
 
-#include <gtirb_stack_stamp/gtirb_stack_stamp.hpp>
+#include "gtirb_stack_stamp/gtirb_stack_stamp.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
