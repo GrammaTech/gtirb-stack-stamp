@@ -16,6 +16,7 @@ COPY libcapstone-dev_*_amd64.deb /
 RUN dpkg -i libcapstone-dev_*_amd64.deb && rm libcapstone-dev_*_amd64.deb
 
 # Install GTIRB APIs
+COPY *.zip .
 RUN unzip -o gtirb-packages.zip \
     && unzip -o gtirb-pprinter-packages.zip \
     && unzip -o ddisasm-packages.zip \
@@ -23,6 +24,7 @@ RUN unzip -o gtirb-packages.zip \
     && rm -rf *.deb *.zip
 
 # Install Keystone
+COPY keystone/ .
 RUN cd keystone && \
     mkdir build && \
     cd build && \
