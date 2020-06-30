@@ -49,7 +49,8 @@ public:
   /// Unlike ByteInterval::insertBytes, it automatically updates the offsets
   /// of anything that occurs after the insertion.
   ///
-  /// \param BI The byte interval to insert into.
+  /// \param BI The byte interval to insert into. This interval must
+  /// have a section and module it belongs to.
   /// \param Offset The offset into the byte interval to insert code at.
   /// \param InsnsStr A string representing a sequence of assembly instructions.
   void insertInstructions(gtirb::ByteInterval& BI, uint64_t Offset,
@@ -60,7 +61,8 @@ public:
   ///
   /// \param FunctionId The UUID of the function we are stack-stamping. Used
   /// to calculate hash values.
-  /// \param Block The code block to insert instructions into.
+  /// \param Block The code block to insert instructions into. This block must
+  /// have a byte interval, section, and module it belongs to.
   void stampEntranceBlock(const gtirb::UUID& FunctionId,
                           gtirb::CodeBlock& Block) const;
 
@@ -69,7 +71,8 @@ public:
   ///
   /// \param FunctionId The UUID of the function we are stack-stamping. Used
   /// to calculate hash values.
-  /// \param Block The code block to insert instructions into.
+  /// \param Block The code block to insert instructions into. This block must
+  /// have a byte interval, section, and module it belongs to.
   void stampExitBlock(const gtirb::UUID& FunctionId,
                       gtirb::CodeBlock& Block) const;
 
@@ -81,6 +84,9 @@ public:
 
   /// \brief Is this code block an exit block; that is, does it end in a
   /// return instruction?
+  ///
+  /// \param Block The code block to check. This block must
+  /// have a byte interval.
   bool isExitBlock(const gtirb::CodeBlock& Block) const;
 
 private:

@@ -66,6 +66,9 @@ static std::string getStampAssembly(const gtirb::UUID& FunctionId) {
 void gtirb_stack_stamp::StackStamper::insertInstructions(
     gtirb::ByteInterval& BI, uint64_t Offset,
     const std::string& InsnsStr) const {
+  assert(BI.getSection() && BI.getSection()->getModule() &&
+         "BI must belong to a section and a module");
+
   gtirb::Addr Addr{0};
   if (auto BiAddr = BI.getAddress()) {
     Addr = *BiAddr + Offset;
@@ -157,12 +160,15 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
 
 void gtirb_stack_stamp::StackStamper::stampEntranceBlock(
     const gtirb::UUID& FunctionId, gtirb::CodeBlock& Block) const {
+  assert(Block.getByteInterval() && "Block must belong to a byte interval");
   insertInstructions(*Block.getByteInterval(), Block.getOffset(),
                      getStampAssembly(FunctionId));
 }
 
 void gtirb_stack_stamp::StackStamper::stampExitBlock(
     const gtirb::UUID& FunctionId, gtirb::CodeBlock& Block) const {
+  assert(Block.getByteInterval() && "Block must belong to a byte interval");
+
   gtirb::Addr A{0};
   if (auto BA = Block.getAddress()) {
     A = *BA;
@@ -187,6 +193,8 @@ void gtirb_stack_stamp::StackStamper::stampExitBlock(
 
 bool gtirb_stack_stamp::StackStamper::isExitBlock(
     const gtirb::CodeBlock& Block) const {
+  assert(Block.getByteInterval() && "Block must belong to a byte interval");
+
   gtirb::Addr A{0};
   if (auto BA = Block.getAddress()) {
     A = *BA;
