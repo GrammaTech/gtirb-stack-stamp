@@ -40,12 +40,12 @@ int main(int ArgC, char** ArgV) {
         po::command_line_parser(ArgC, ArgV).options(Desc).positional(PD).run(),
         VM);
     if (VM.count("help") != 0) {
-      std::cout << Desc << std::endl;
+      std::cerr << Desc << std::endl;
       return EXIT_FAILURE;
     }
     po::notify(VM);
   } catch (std::exception& E) {
-    std::cout << "error: " << E.what() << ". Try '" << ArgV[0]
+    std::cerr << "error: " << E.what() << ". Try '" << ArgV[0]
               << " --help' for more information." << std::endl;
     return EXIT_FAILURE;
   }
@@ -55,37 +55,28 @@ int main(int ArgC, char** ArgV) {
   gtirb::IR* Ir;
 
   boost::filesystem::path InputPath = VM["in"].as<std::string>();
-  if (boost::filesystem::exists(InputPath)) {
-    std::cout << "Reading GTIRB file: " << InputPath << std::endl;
-    std::ifstream InputStream(InputPath.string(),
-                              std::ios::in | std::ios::binary);
-    if (auto ErrorOrIR = gtirb::IR::load(Ctx, InputStream)) {
-      Ir = *ErrorOrIR;
-    } else {
-      std::cout << "error: " << ErrorOrIR.getError().message() << std::endl;
-      return EXIT_FAILURE;
-    }
+  std::cerr << "Reading GTIRB file: " << InputPath << std::endl;
+  std::ifstream InputStream(InputPath.string(),
+                            std::ios::in | std::ios::binary);
+  if (auto ErrorOrIR = gtirb::IR::load(Ctx, InputStream)) {
+    Ir = *ErrorOrIR;
   } else {
-    std::cout << "error: Input file not found!" << std::endl;
+    std::cerr << "error: " << ErrorOrIR.getError().message() << std::endl;
     return EXIT_FAILURE;
   }
 
   for (auto& M : Ir->modules()) {
-    std::cout << "Stack stamping module '" << M.getBinaryPath() << "'..."
+    std::cerr << "Stack stamping module '" << M.getBinaryPath() << "'..."
               << std::endl;
     gtirb_stack_stamp::stamp(Ctx, M);
   }
 
   boost::filesystem::path OutputPath = VM["out"].as<std::string>();
-  std::cout << "Writing to GTIRB file: " << OutputPath << std::endl;
+  std::cerr << "Writing to GTIRB file: " << OutputPath << std::endl;
   std::ofstream OutputStream(OutputPath.string(),
                              std::ios::out | std::ios::binary);
   Ir->save(OutputStream);
-  if (!OutputStream) {
-    std::cout << "error: Failed to write output!" << std::endl;
-    return EXIT_FAILURE;
-  } else {
-    std::cout << "Output written successfully. " << std::endl;
-    return EXIT_SUCCESS;
-  }
+
+  std::cerr << "Output written successfully. " << std::endl;
+  return EXIT_SUCCESS;
 }
