@@ -57,8 +57,8 @@ static std::string getStampAssembly(const gtirb::UUID& FunctionId) {
   // convert it into two 64-bit numbers.
   std::array<uint8_t, 16> Bytes;
   std::copy(FunctionId.begin(), FunctionId.end(), Bytes.begin());
-  uint64_t Num1 = *reinterpret_cast<uint64_t*>(Bytes.data()),
-           Num2 = *(reinterpret_cast<uint64_t*>(Bytes.data()) + 1);
+  uint32_t Num1 = *reinterpret_cast<uint32_t*>(Bytes.data()),
+           Num2 = *(reinterpret_cast<uint32_t*>(Bytes.data()) + 3);
 
   std::ostringstream ss;
   ss << "xorl $0x" << std::hex << Num1 << ",(%rsp); xorl $0x" << std::hex
