@@ -42,10 +42,10 @@ static void modifyBlock(BlockType& Block, uint64_t Offset, uint64_t Size) {
   uint64_t BlockOff = Block.getOffset(), BlockSize = Block.getSize();
 
   if (BlockOff <= Offset && BlockOff + BlockSize > Offset) {
-    // increase in size any blocks that intersect with the new bytes
+    // Increase in size any blocks that intersect with the new bytes.
     Block.setSize(BlockSize + Size);
   } else if (BlockOff >= Offset) {
-    // move any blocks over that occur after the inserted bytes
+    // Move any blocks over that occur after the inserted bytes.
     Block.getByteInterval()->addBlock(BlockOff + Size, &Block);
   }
 }
@@ -78,11 +78,11 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
              &BytesLen, &StatCount);
   assert(KSRes == KS_ERR_OK);
 
-  // modify contents
+  // Modify contents.
   BI.insertBytes<unsigned char>(BI.bytes_begin<unsigned char>() + Offset, Bytes,
                                 Bytes + BytesLen);
 
-  // modify blocks
+  // Modify blocks.
   std::vector<gtirb::CodeBlock*> CodeBlocks;
   for (auto& Block : BI.code_blocks()) {
     CodeBlocks.push_back(&Block);
@@ -99,7 +99,7 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
     modifyBlock(*Block, Offset, BytesLen);
   }
 
-  // modify symbolic expressions
+  // Modify symbolic expressions.
   std::vector<std::tuple<uint64_t, gtirb::SymbolicExpression>> SEEs;
   for (const auto SEE : BI.symbolic_expressions()) {
     if (SEE.getOffset() >= Offset) {
@@ -111,7 +111,7 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
     BI.addSymbolicExpression(std::get<0>(SEE) + BytesLen, std::get<1>(SEE));
   }
 
-  // modify any affected aux data
+  // Modify any affected aux data.
   if (const auto* CFIs = BI.getSection()
                              ->getModule()
                              ->getAuxData<gtirb::schema::CfiDirectives>()) {
@@ -201,7 +201,7 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
 
 void gtirb_stack_stamp::StackStamper::stampFunction(
     gtirb::Module& M, const gtirb::UUID& FunctionId) const {
-  // get aux data
+  // Get the aux data.
   const auto* AllBlocks = M.getAuxData<gtirb::schema::FunctionBlocks>();
   const auto* AllEntries = M.getAuxData<gtirb::schema::FunctionEntries>();
 
@@ -209,7 +209,7 @@ void gtirb_stack_stamp::StackStamper::stampFunction(
     return;
   }
 
-  // if there are no entrance or exit blocks, don't add either
+  // If there are no entrance or exit blocks, don't add either.
   if (AllEntries->at(FunctionId).empty()) {
     return;
   }
@@ -225,13 +225,13 @@ void gtirb_stack_stamp::StackStamper::stampFunction(
     return;
   }
 
-  // handle entrance blocks
+  // Handle entrance blocks.
   for (const auto& BlockId : AllEntries->at(FunctionId)) {
     stampEntranceBlock(FunctionId, *cast<gtirb::CodeBlock>(
                                        gtirb::Node::getByUUID(Ctx, BlockId)));
   }
 
-  // handle exit blocks
+  // Handle exit blocks.
   for (auto* Block : ExitBlocks) {
     stampExitBlock(FunctionId, *Block);
   }
