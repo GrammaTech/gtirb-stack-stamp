@@ -30,11 +30,11 @@ namespace gtirb_stack_stamp {
 class StackStamper {
 public:
   explicit StackStamper(gtirb::Context& Ctx_) : Ctx{Ctx_} {
-    [[maybe_unused]] auto CSRet = cs_open(CS_ARCH_X86, CS_MODE_64, &Capstone);
+    [[maybe_unused]] cs_err CSRet = cs_open(CS_ARCH_X86, CS_MODE_64, &Capstone);
     assert(CSRet == CS_ERR_OK);
     cs_option(Capstone, CS_OPT_DETAIL, CS_OPT_ON);
 
-    [[maybe_unused]] auto KSRet =
+    [[maybe_unused]] ks_err KSRet =
         ks_open(KS_ARCH_X86, KS_MODE_LITTLE_ENDIAN | KS_MODE_64, &Keystone);
     assert(KSRet == KS_ERR_OK);
     ks_option(Keystone, KS_OPT_SYNTAX, KS_OPT_SYNTAX_ATT);

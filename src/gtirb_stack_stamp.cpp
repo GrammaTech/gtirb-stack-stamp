@@ -39,8 +39,7 @@ struct SymbolicExpressionSizes {
 
 template <typename BlockType>
 static void modifyBlock(BlockType& Block, uint64_t Offset, uint64_t Size) {
-  auto BlockOff = Block.getOffset();
-  auto BlockSize = Block.getSize();
+  uint64_t BlockOff = Block.getOffset(), BlockSize = Block.getSize();
 
   if (BlockOff <= Offset && BlockOff + BlockSize > Offset) {
     // increase in size any blocks that intersect with the new bytes
@@ -53,7 +52,7 @@ static void modifyBlock(BlockType& Block, uint64_t Offset, uint64_t Size) {
 
 static std::string getStampAssembly(const gtirb::UUID& FunctionId) {
   uint64_t Seed = 1;
-  for (auto Byte : FunctionId) {
+  for (uint8_t Byte : FunctionId) {
     Seed *= Byte;
   }
   std::mt19937_64 Rng{Seed};
@@ -74,7 +73,7 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
 
   unsigned char* Bytes;
   size_t BytesLen, StatCount;
-  [[maybe_unused]] auto KSRes =
+  [[maybe_unused]] int KSRes =
       ks_asm(Keystone, InsnsStr.c_str(), static_cast<uint64_t>(Addr), &Bytes,
              &BytesLen, &StatCount);
   assert(KSRes == KS_ERR_OK);
@@ -126,7 +125,7 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
             CB->getOffset() + CB->getSize() > Offset)) {
         NewCFIs[BlockOffset] = Directive;
       } else {
-        auto NewOffset = BlockOffset;
+        gtirb::Offset NewOffset = BlockOffset;
         NewOffset.Displacement += BytesLen;
         NewCFIs[NewOffset] = Directive;
       }
@@ -145,7 +144,7 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
           BIOffset.Displacement < Offset) {
         NewSES[BIOffset] = Size;
       } else {
-        auto NewOffset = BIOffset;
+        gtirb::Offset NewOffset = BIOffset;
         NewOffset.Displacement += BytesLen;
         NewSES[NewOffset] = Size;
       }
@@ -175,7 +174,7 @@ void gtirb_stack_stamp::StackStamper::stampExitBlock(
                 static_cast<uint64_t>(A), 0, &Insns);
   uint64_t Offset = Block.getOffset();
   for (size_t I = 0; I < InsnsLen; I++) {
-    const auto& Insn = Insns[I];
+    const cs_insn& Insn = Insns[I];
     if (Insn.id == X86_INS_RET) {
       insertInstructions(*Block.getByteInterval(), Offset,
                          getStampAssembly(FunctionId));
@@ -194,7 +193,7 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
   }
 
   cs_insn* Insns;
-  auto InsnsLen =
+  size_t InsnsLen =
       cs_disasm(Capstone, Block.rawBytes<uint8_t>(), Block.getSize(),
                 static_cast<uint64_t>(A), 0, &Insns);
   return Insns[InsnsLen - 1].id == X86_INS_RET;

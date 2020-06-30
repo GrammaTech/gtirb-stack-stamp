@@ -31,7 +31,7 @@ protected:
 
 TEST_F(GtirbStackStampFixture, TestInsertInstructions) {
   ks_engine* Keystone;
-  auto KSRet =
+  ks_err KSRet =
       ks_open(KS_ARCH_X86, KS_MODE_LITTLE_ENDIAN | KS_MODE_64, &Keystone);
   ASSERT_EQ(KSRet, KS_ERR_OK);
   ks_option(Keystone, KS_OPT_SYNTAX, KS_OPT_SYNTAX_ATT);
@@ -40,8 +40,8 @@ TEST_F(GtirbStackStampFixture, TestInsertInstructions) {
 
   unsigned char* Bytes;
   size_t BytesLen, StatCount;
-  [[maybe_unused]] auto KSRes = ks_asm(Keystone, InstructionsToInsert.c_str(),
-                                       0, &Bytes, &BytesLen, &StatCount);
+  [[maybe_unused]] int KSRes = ks_asm(Keystone, InstructionsToInsert.c_str(), 0,
+                                      &Bytes, &BytesLen, &StatCount);
   ASSERT_EQ(KSRes, KS_ERR_OK);
 
   std::string BIContents = "\x01\x02\x03\x04\x05\x06\x07\x08";
@@ -121,7 +121,7 @@ TEST_F(GtirbStackStampFixture, TestStackStamp) {
   ASSERT_TRUE(boost::filesystem::exists("factorial.stamp"));
 
   auto* TempFile = std::tmpnam(nullptr);
-  auto ReturnCode =
+  int ReturnCode =
       std::system(("./factorial.stamp 10 > " + std::string{TempFile}).c_str());
   std::string Output;
   {
