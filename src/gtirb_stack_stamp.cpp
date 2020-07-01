@@ -161,6 +161,9 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
         ->getModule()
         ->addAuxData<gtirb::schema::SymbolicExpressionSizes>(std::move(NewSES));
   }
+
+  // Free the Keystone data.
+  ks_free(Bytes);
 }
 
 void gtirb_stack_stamp::StackStamper::stampEntranceBlock(
@@ -179,10 +182,20 @@ void gtirb_stack_stamp::StackStamper::stampExitBlock(
     A = *BA;
   }
 
+  const uint8_t* RawBytes;
+  std::vector<uint8_t> RawBytesVector;
+  if (auto* BI = Block.getByteInterval();
+      BI->getSize() == BI->getInitializedSize()) {
+    RawBytes = Block.rawBytes<uint8_t>();
+  } else {
+    std::copy(Block.bytes_begin<uint8_t>(), Block.bytes_end<uint8_t>(),
+              std::back_inserter(RawBytesVector));
+    RawBytes = RawBytesVector.data();
+  }
+
   cs_insn* Insns;
-  size_t InsnsLen =
-      cs_disasm(Capstone, Block.rawBytes<uint8_t>(), Block.getSize(),
-                static_cast<uint64_t>(A), 0, &Insns);
+  size_t InsnsLen = cs_disasm(Capstone, RawBytes, Block.getSize(),
+                              static_cast<uint64_t>(A), 0, &Insns);
   uint64_t Offset = Block.getOffset();
   for (size_t I = 0; I < InsnsLen; I++) {
     const cs_insn& Insn = Insns[I];
@@ -194,6 +207,8 @@ void gtirb_stack_stamp::StackStamper::stampExitBlock(
       Offset += Insn.size;
     }
   }
+
+  cs_free(Insns, InsnsLen);
 }
 
 bool gtirb_stack_stamp::StackStamper::isExitBlock(
@@ -205,11 +220,23 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
     A = *BA;
   }
 
+  const uint8_t* RawBytes;
+  std::vector<uint8_t> RawBytesVector;
+  if (auto* BI = Block.getByteInterval();
+      BI->getSize() == BI->getInitializedSize()) {
+    RawBytes = Block.rawBytes<uint8_t>();
+  } else {
+    std::copy(Block.bytes_begin<uint8_t>(), Block.bytes_end<uint8_t>(),
+              std::back_inserter(RawBytesVector));
+    RawBytes = RawBytesVector.data();
+  }
+
   cs_insn* Insns;
-  size_t InsnsLen =
-      cs_disasm(Capstone, Block.rawBytes<uint8_t>(), Block.getSize(),
-                static_cast<uint64_t>(A), 0, &Insns);
-  return Insns[InsnsLen - 1].id == X86_INS_RET;
+  size_t InsnsLen = cs_disasm(Capstone, RawBytes, Block.getSize(),
+                              static_cast<uint64_t>(A), 0, &Insns);
+  bool Result = InsnsLen != 0 && Insns[InsnsLen - 1].id == X86_INS_RET;
+  cs_free(Insns, InsnsLen);
+  return Result;
 }
 
 void gtirb_stack_stamp::StackStamper::stampFunction(
