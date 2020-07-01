@@ -91,7 +91,9 @@ gtirb_stack_stamp::CapstoneExecution::CapstoneExecution(
 }
 
 gtirb_stack_stamp::CapstoneExecution::~CapstoneExecution() {
-  cs_free(Instructions, NumInstructions);
+  if (Instructions) {
+    cs_free(Instructions, NumInstructions);
+  }
 }
 
 gtirb_stack_stamp::KeystoneExecution::KeystoneExecution(
@@ -104,7 +106,11 @@ gtirb_stack_stamp::KeystoneExecution::KeystoneExecution(
   assert(KSRes == KS_ERR_OK);
 }
 
-gtirb_stack_stamp::KeystoneExecution::~KeystoneExecution() { ks_free(Bytes); }
+gtirb_stack_stamp::KeystoneExecution::~KeystoneExecution() {
+  if (Bytes) {
+    ks_free(Bytes);
+  }
+}
 
 void gtirb_stack_stamp::StackStamper::insertInstructions(
     gtirb::ByteInterval& BI, uint64_t Offset,
@@ -118,8 +124,8 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
   }
 
   KeystoneExecution Asm{*this, InsnsStr, Addr};
-  auto* Bytes = Asm.getBytes();
-  auto BytesLen = Asm.getNumBytes();
+  const unsigned char* Bytes = Asm.getBytes();
+  size_t BytesLen = Asm.getNumBytes();
 
   // Modify contents.
   BI.insertBytes<unsigned char>(BI.bytes_begin<unsigned char>() + Offset, Bytes,
@@ -229,7 +235,7 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
   assert(Block.getByteInterval() && "Block must belong to a byte interval");
 
   CapstoneExecution Disasm{*this, Block};
-  auto NumInstrcutions = Disasm.getNumInstructions();
+  size_t NumInstrcutions = Disasm.getNumInstructions();
   return NumInstrcutions != 0 &&
          Disasm.getInstructions()[NumInstrcutions - 1].id == X86_INS_RET;
 }

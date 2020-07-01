@@ -118,8 +118,8 @@ public:
   size_t getNumInstructions() const { return NumInstructions; }
 
 private:
-  cs_insn* Instructions;
-  size_t NumInstructions;
+  cs_insn* Instructions = nullptr;
+  size_t NumInstructions = 0;
 };
 
 /// \class KeystoneExecution
@@ -140,8 +140,8 @@ public:
   size_t getNumBytes() const { return NumBytes; }
 
 private:
-  unsigned char* Bytes;
-  size_t NumBytes;
+  unsigned char* Bytes = nullptr;
+  size_t NumBytes = 0;
 };
 
 /// \brief Stack-stamps all functions in a module.
