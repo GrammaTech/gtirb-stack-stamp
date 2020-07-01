@@ -65,6 +65,47 @@ static std::string getStampAssembly(const gtirb::UUID& FunctionId) {
   return ss.str();
 }
 
+gtirb_stack_stamp::CapstoneExecution::CapstoneExecution(
+    const gtirb_stack_stamp::StackStamper& Stamper,
+    const gtirb::CodeBlock& Block) {
+  assert(Block.getByteInterval() && "Block must belong to a byte interval");
+
+  gtirb::Addr A{0};
+  if (auto BA = Block.getAddress()) {
+    A = *BA;
+  }
+
+  const uint8_t* RawBytes;
+  std::vector<uint8_t> RawBytesVector;
+  if (auto* BI = Block.getByteInterval();
+      BI->getSize() == BI->getInitializedSize()) {
+    RawBytes = Block.rawBytes<uint8_t>();
+  } else {
+    std::copy(Block.bytes_begin<uint8_t>(), Block.bytes_end<uint8_t>(),
+              std::back_inserter(RawBytesVector));
+    RawBytes = RawBytesVector.data();
+  }
+
+  NumInstructions = cs_disasm(Stamper.Capstone, RawBytes, Block.getSize(),
+                              static_cast<uint64_t>(A), 0, &Instructions);
+}
+
+gtirb_stack_stamp::CapstoneExecution::~CapstoneExecution() {
+  cs_free(Instructions, NumInstructions);
+}
+
+gtirb_stack_stamp::KeystoneExecution::KeystoneExecution(
+    const gtirb_stack_stamp::StackStamper& Stamper, const std::string& Asm,
+    gtirb::Addr Addr) {
+  size_t StatCount;
+  [[maybe_unused]] int KSRes =
+      ks_asm(Stamper.Keystone, Asm.c_str(), static_cast<uint64_t>(Addr), &Bytes,
+             &NumBytes, &StatCount);
+  assert(KSRes == KS_ERR_OK);
+}
+
+gtirb_stack_stamp::KeystoneExecution::~KeystoneExecution() { ks_free(Bytes); }
+
 void gtirb_stack_stamp::StackStamper::insertInstructions(
     gtirb::ByteInterval& BI, uint64_t Offset,
     const std::string& InsnsStr) const {
@@ -76,12 +117,9 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
     Addr = *BiAddr + Offset;
   }
 
-  unsigned char* Bytes;
-  size_t BytesLen, StatCount;
-  [[maybe_unused]] int KSRes =
-      ks_asm(Keystone, InsnsStr.c_str(), static_cast<uint64_t>(Addr), &Bytes,
-             &BytesLen, &StatCount);
-  assert(KSRes == KS_ERR_OK);
+  KeystoneExecution Asm{*this, InsnsStr, Addr};
+  auto* Bytes = Asm.getBytes();
+  auto BytesLen = Asm.getNumBytes();
 
   // Modify contents.
   BI.insertBytes<unsigned char>(BI.bytes_begin<unsigned char>() + Offset, Bytes,
@@ -160,9 +198,6 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
         ->getModule()
         ->addAuxData<gtirb::schema::SymbolicExpressionSizes>(std::move(NewSES));
   }
-
-  // Free the Keystone data.
-  ks_free(Bytes);
 }
 
 void gtirb_stack_stamp::StackStamper::stampEntranceBlock(
@@ -174,30 +209,11 @@ void gtirb_stack_stamp::StackStamper::stampEntranceBlock(
 
 void gtirb_stack_stamp::StackStamper::stampExitBlock(
     const gtirb::UUID& FunctionId, gtirb::CodeBlock& Block) const {
-  assert(Block.getByteInterval() && "Block must belong to a byte interval");
+  CapstoneExecution Disasm{*this, Block};
 
-  gtirb::Addr A{0};
-  if (auto BA = Block.getAddress()) {
-    A = *BA;
-  }
-
-  const uint8_t* RawBytes;
-  std::vector<uint8_t> RawBytesVector;
-  if (auto* BI = Block.getByteInterval();
-      BI->getSize() == BI->getInitializedSize()) {
-    RawBytes = Block.rawBytes<uint8_t>();
-  } else {
-    std::copy(Block.bytes_begin<uint8_t>(), Block.bytes_end<uint8_t>(),
-              std::back_inserter(RawBytesVector));
-    RawBytes = RawBytesVector.data();
-  }
-
-  cs_insn* Insns;
-  size_t InsnsLen = cs_disasm(Capstone, RawBytes, Block.getSize(),
-                              static_cast<uint64_t>(A), 0, &Insns);
   uint64_t Offset = Block.getOffset();
-  for (size_t I = 0; I < InsnsLen; I++) {
-    const cs_insn& Insn = Insns[I];
+  for (size_t I = 0; I < Disasm.getNumInstructions(); I++) {
+    const cs_insn& Insn = Disasm.getInstructions()[I];
     if (Insn.id == X86_INS_RET) {
       insertInstructions(*Block.getByteInterval(), Offset,
                          getStampAssembly(FunctionId));
@@ -206,36 +222,16 @@ void gtirb_stack_stamp::StackStamper::stampExitBlock(
       Offset += Insn.size;
     }
   }
-
-  cs_free(Insns, InsnsLen);
 }
 
 bool gtirb_stack_stamp::StackStamper::isExitBlock(
     const gtirb::CodeBlock& Block) const {
   assert(Block.getByteInterval() && "Block must belong to a byte interval");
 
-  gtirb::Addr A{0};
-  if (auto BA = Block.getAddress()) {
-    A = *BA;
-  }
-
-  const uint8_t* RawBytes;
-  std::vector<uint8_t> RawBytesVector;
-  if (auto* BI = Block.getByteInterval();
-      BI->getSize() == BI->getInitializedSize()) {
-    RawBytes = Block.rawBytes<uint8_t>();
-  } else {
-    std::copy(Block.bytes_begin<uint8_t>(), Block.bytes_end<uint8_t>(),
-              std::back_inserter(RawBytesVector));
-    RawBytes = RawBytesVector.data();
-  }
-
-  cs_insn* Insns;
-  size_t InsnsLen = cs_disasm(Capstone, RawBytes, Block.getSize(),
-                              static_cast<uint64_t>(A), 0, &Insns);
-  bool Result = InsnsLen != 0 && Insns[InsnsLen - 1].id == X86_INS_RET;
-  cs_free(Insns, InsnsLen);
-  return Result;
+  CapstoneExecution Disasm{*this, Block};
+  auto NumInstrcutions = Disasm.getNumInstructions();
+  return NumInstrcutions != 0 &&
+         Disasm.getInstructions()[NumInstrcutions - 1].id == X86_INS_RET;
 }
 
 void gtirb_stack_stamp::StackStamper::stampFunction(

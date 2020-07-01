@@ -95,6 +95,53 @@ private:
   gtirb::Context& Ctx;
   csh Capstone;
   ks_engine* Keystone;
+
+  friend class CapstoneExecution;
+  friend class KeystoneExecution;
+};
+
+/// \class CapstoneExecution
+///
+/// Construct this to get the disassembly for a block.
+/// Destroying this automatically frees memory allocated by Capstone.
+class CapstoneExecution {
+public:
+  CapstoneExecution(const gtirb_stack_stamp::StackStamper& Stamper,
+                    const gtirb::CodeBlock& Block);
+  ~CapstoneExecution();
+
+  /// \brief Get the instructions contained in the disassembled block.
+  /// This is an array with a length determined by getNumInstructions.
+  const cs_insn* getInstructions() const { return Instructions; }
+
+  /// \brief Get the number of instructions contained in the disassembled block.
+  size_t getNumInstructions() const { return NumInstructions; }
+
+private:
+  cs_insn* Instructions;
+  size_t NumInstructions;
+};
+
+/// \class KeystoneExecution
+///
+/// Construct this to get the assembly for a string.
+/// Destroying this automatically frees memory allocated by Keystone.
+class KeystoneExecution {
+public:
+  KeystoneExecution(const gtirb_stack_stamp::StackStamper& Stamper,
+                    const std::string& Asm, gtirb::Addr Addr);
+  ~KeystoneExecution();
+
+  /// \brief Get the bytes contained in the generated assembly.
+  /// This is an array with a length determined by getNumBytes.
+  const unsigned char* getBytes() const { return Bytes; }
+
+  /// \brief Get the number of bytes contained in the generated assembly.
+  size_t getNumBytes() const { return NumBytes; }
+
+private:
+  unsigned char* Bytes;
+  size_t NumBytes;
 };
 
 /// \brief Stack-stamps all functions in a module.
