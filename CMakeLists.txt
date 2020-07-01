@@ -157,9 +157,11 @@ endif()
 if(BUILD_SHARED_LIBS)
   find_library(CAPSTONE NAMES capstone)
   find_library(KEYSTONE NAMES keystone)
+  include_directories(SYSTEM ${CAPSTONE}/../include ${KEYSTONE}/../include)
 else()
   find_library(CAPSTONE NAMES libcapstone.a)
   find_library(KEYSTONE NAMES libkeystone.a)
+  include_directories(SYSTEM ${CAPSTONE}/../include ${KEYSTONE}/../include)
 endif()
 
 # ---------------------------------------------------------------------------
