@@ -26,6 +26,7 @@ different languages:
 
 This transform depends on the following libraries:
 
+* [Boost](https://www.boost.org/) (version 1.67 or later)
 * [GTIRB](https://github.com/grammatech/gtirb)
 * [Capstone](https://github.com/aquynh/capstone)
 * [Keystone](https://github.com/keystone-engine/keystone)
@@ -33,7 +34,16 @@ This transform depends on the following libraries:
 Ensure they are installed before compiling the C++ version of the transform.
 Building from source also depends on [CMake](https://cmake.org) being installed.
 
-#### Linux
+#### Options
+
+We add the folliwng CMake options during building:
+
+* `GTIRB_STACK_STAMP_ENABLE_TESTS`: Set to `OFF` to disable the downloading of
+  Google Test and the building of the test executable.
+* `GTIRB_STACK_STAMP_BUILD_SHARED_LIBS`: Set to `OFF` to build static libraries
+  instead of dybnamic ones.
+
+#### On Linux
 
 ```sh
 cmake -Bbuild ./
@@ -43,12 +53,24 @@ make
 
 The generated command-line utility will then be available in `build/bin`.
 
-#### Windows
+#### On Windows
 
 Currently, [some](https://github.com/keystone-engine/keystone/issues/471)
 [issues](https://github.com/keystone-engine/keystone/issues/472) are preventing
 Keystone from being built on Windows, so the C++ version of gtirb-stack-stamp is
 buildable on Linux only for the time being.
+
+#### Tests
+
+Our CMake automatically downloads a local copy of [Google Test](https://github.com/google/googletest)
+and produces a test executable. To run it:
+
+```sh
+build/bin/test-gtirb-stack-stamp
+```
+
+You will need [gtirb-pprinter](https://github.com/grammatech/gtirb-pprinter)
+and [ddisasm](https://github.com/grammatech/ddisasm) on your PATH.
 
 ### Python
 
