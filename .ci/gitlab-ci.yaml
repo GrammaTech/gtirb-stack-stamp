@@ -10,6 +10,7 @@ stages:
   - build-images
   - check-format
   - test
+  - test-windows
   - build
   - test_package
   - cleanup
@@ -22,7 +23,7 @@ build-images:
     - shell-exec
   script:
     # download packages
-    - cp /u4/TARBALLS/debloat/pkgs/libcapstone-dev_4.0.1-gt1_amd64.deb ./
+    - cp /u4/TARBALLS/debloat/pkgs/libcapstone-dev_4.0.1-gt2_amd64.deb ./
     - wget -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 -O gtirb-packages.zip
     - wget -L https://git.grammatech.com/rewriting/gtirb-pprinter/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 -O gtirb-pprinter-packages.zip
     - wget -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 -O ddisasm-packages.zip
@@ -48,8 +49,49 @@ test-python:
   tags:
     - docker-exec
   image: $BUILD_IMAGE_NAME
+  artifacts:
+    name: "$CI_COMMIT_REF_NAME-$CI_JOB_NAME"
+    paths:
+      - tests/factorial
   script:
     - python3 setup.py test
+
+test-python-windows:
+  stage: test-windows
+  tags:
+    - windows-gtirb-stack-stamp
+  variables:
+    GTIRB_BRANCH: master
+    GTIRB_PPRINTER_BRANCH: master
+    DDISASM_BRANCH: master
+    GTIRB_CAPSTONE_BRANCH: master
+    GTIRB_FUNCTIONS_BRANCH: master
+  needs: ['test-python']
+  script:
+    # Install gtirb python API
+    - curl -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=python-wheel --output "gtirb-wheel.zip"
+    - unzip gtirb-wheel.zip
+    - python -m pip install pip --upgrade && python -m pip install gtirb-*-py*.whl
+    # Install gtirb-pprinter
+    - curl -L https://git.grammatech.com/rewriting/gtirb-pprinter/-/jobs/artifacts/${GTIRB_PPRINTER_BRANCH}/download?job=build-windows-msvc-relwithdebinfo --output "gtirb-pprinter-artifacts.zip"
+    # Below, unzip doesn't work: the unzipped binary will not execute because
+    # of a permissions error.  If you give it the correct permissions it just
+    # silently fails on the command line.  This is happening because the zip
+    # file is 'blocked'.  The powershell cmdlet Expand-Archive will unzip a
+    # runnable, 'unblocked' binary.
+    - powershell -Command '$global:ProgressPreference = "SilentlyContinue"; Expand-Archive gtirb-pprinter-artifacts.zip'
+    - cp -r gtirb-pprinter-artifacts/gtirb_pprinter-*-win64 ./
+    # Install ddisasm
+    - curl -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/${DDISASM_BRANCH}/download?job=build-windows-msvc-relwithdebinfo --output "ddisasm-artifacts.zip"
+    - powershell -Command '$global:ProgressPreference = "SilentlyContinue"; Expand-Archive ddisasm-artifacts.zip'
+    - cp -r ddisasm-artifacts/DDISASM-*-win64 ./
+    # Install gtirb helper libraries
+    - curl -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-1.0.0-py3-none-any.whl?job=build --output gtirb_functions-1.0.0-py3-none-any.whl
+    - curl -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts/master/raw/dist/gtirb_capstone-1.0.0-py3-none-any.whl?job=build --output gtirb_capstone-1.0.0-py3-none-any.whl
+    - python -m pip install gtirb_functions-1.0.0-py3-none-any.whl
+    - python -m pip install gtirb_capstone-1.0.0-py3-none-any.whl
+    # Run the test
+    - PATH="$PATH;$(cygpath -w $(pwd)/DDISASM-*-win64/bin);$(cygpath -w $(pwd)/gtirb_pprinter-*-win64/bin)" cmd.exe /C "C:\\VS\\VC\\Auxiliary\\Build\\vcvars64.bat && python setup.py test"
 
 test-common-lisp:
   stage: test

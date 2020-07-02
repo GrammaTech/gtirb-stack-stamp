@@ -39,12 +39,12 @@ RUN ldconfig /usr/local/lib
 RUN pip3 install capstone keystone-engine
 
 # Download GTIRB helper libraries.
-RUN wget -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-0.1.0-py3-none-any.whl?job=build -O gtirb_functions-0.1.0-py3-none-any.whl
+RUN wget -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-1.0.0-py3-none-any.whl?job=build -O gtirb_functions-1.0.0-py3-none-any.whl
 
-RUN wget -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts/master/raw/dist/gtirb_capstone-0.1.0-py3-none-any.whl?job=build -O gtirb_capstone-0.1.0-py3-none-any.whl
+RUN wget -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts/master/raw/dist/gtirb_capstone-1.0.0-py3-none-any.whl?job=build -O gtirb_capstone-1.0.0-py3-none-any.whl
 
-RUN python3 -m pip install gtirb_functions-0.1.0-py3-none-any.whl && \
-    python3 -m pip install gtirb_capstone-0.1.0-py3-none-any.whl
+RUN python3 -m pip install gtirb_functions-1.0.0-py3-none-any.whl && \
+    python3 -m pip install gtirb_capstone-1.0.0-py3-none-any.whl
 
 # Common Lisp Setup
 RUN apt-get install -y sbcl
