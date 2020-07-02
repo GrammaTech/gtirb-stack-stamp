@@ -66,8 +66,7 @@ static std::string getStampAssembly(const gtirb::UUID& FunctionId) {
 }
 
 gtirb_stack_stamp::CapstoneExecution::CapstoneExecution(
-    const gtirb_stack_stamp::StackStamper& Stamper,
-    const gtirb::CodeBlock& Block) {
+    csh Capstone, const gtirb::CodeBlock& Block) {
   assert(Block.getByteInterval() && "Block must belong to a byte interval");
 
   gtirb::Addr A{0};
@@ -86,7 +85,7 @@ gtirb_stack_stamp::CapstoneExecution::CapstoneExecution(
     RawBytes = RawBytesVector.data();
   }
 
-  NumInstructions = cs_disasm(Stamper.Capstone, RawBytes, Block.getSize(),
+  NumInstructions = cs_disasm(Capstone, RawBytes, Block.getSize(),
                               static_cast<uint64_t>(A), 0, &Instructions);
 }
 
@@ -96,12 +95,12 @@ gtirb_stack_stamp::CapstoneExecution::~CapstoneExecution() {
   }
 }
 
-gtirb_stack_stamp::KeystoneExecution::KeystoneExecution(
-    const gtirb_stack_stamp::StackStamper& Stamper, const std::string& Asm,
-    gtirb::Addr Addr) {
+gtirb_stack_stamp::KeystoneExecution::KeystoneExecution(ks_engine* Keystone,
+                                                        const std::string& Asm,
+                                                        gtirb::Addr Addr) {
   size_t StatCount;
   [[maybe_unused]] int KSRes =
-      ks_asm(Stamper.Keystone, Asm.c_str(), static_cast<uint64_t>(Addr), &Bytes,
+      ks_asm(Keystone, Asm.c_str(), static_cast<uint64_t>(Addr), &Bytes,
              &NumBytes, &StatCount);
   assert(KSRes == KS_ERR_OK);
 }
@@ -123,7 +122,7 @@ void gtirb_stack_stamp::StackStamper::insertInstructions(
     Addr = *BiAddr + Offset;
   }
 
-  KeystoneExecution Asm{*this, InsnsStr, Addr};
+  KeystoneExecution Asm{Keystone, InsnsStr, Addr};
   const unsigned char* Bytes = Asm.getBytes();
   size_t BytesLen = Asm.getNumBytes();
 
@@ -215,7 +214,7 @@ void gtirb_stack_stamp::StackStamper::stampEntranceBlock(
 
 void gtirb_stack_stamp::StackStamper::stampExitBlock(
     const gtirb::UUID& FunctionId, gtirb::CodeBlock& Block) const {
-  CapstoneExecution Disasm{*this, Block};
+  CapstoneExecution Disasm{Capstone, Block};
 
   uint64_t Offset = Block.getOffset();
   for (size_t I = 0; I < Disasm.getNumInstructions(); I++) {
@@ -234,7 +233,7 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
     const gtirb::CodeBlock& Block) const {
   assert(Block.getByteInterval() && "Block must belong to a byte interval");
 
-  CapstoneExecution Disasm{*this, Block};
+  CapstoneExecution Disasm{Capstone, Block};
   size_t NumInstructions = Disasm.getNumInstructions();
   return NumInstructions != 0 &&
          Disasm.getInstructions()[NumInstructions - 1].id == X86_INS_RET;

@@ -95,9 +95,6 @@ private:
   gtirb::Context& Ctx;
   csh Capstone;
   ks_engine* Keystone;
-
-  friend class CapstoneExecution;
-  friend class KeystoneExecution;
 };
 
 /// \class CapstoneExecution
@@ -106,8 +103,7 @@ private:
 /// Destroying this automatically frees memory allocated by Capstone.
 class CapstoneExecution {
 public:
-  CapstoneExecution(const gtirb_stack_stamp::StackStamper& Stamper,
-                    const gtirb::CodeBlock& Block);
+  CapstoneExecution(csh Capstone, const gtirb::CodeBlock& Block);
   ~CapstoneExecution();
 
   /// \brief Get the instructions contained in the disassembled block.
@@ -128,8 +124,8 @@ private:
 /// Destroying this automatically frees memory allocated by Keystone.
 class KeystoneExecution {
 public:
-  KeystoneExecution(const gtirb_stack_stamp::StackStamper& Stamper,
-                    const std::string& Asm, gtirb::Addr Addr);
+  KeystoneExecution(ks_engine* Keystone, const std::string& Asm,
+                    gtirb::Addr Addr);
   ~KeystoneExecution();
 
   /// \brief Get the bytes contained in the generated assembly.
