@@ -23,6 +23,10 @@ desired address.
 This repository contains three implementations of stack-stamping in three
 different languages:
 
+1. [Python](#python)
+2. [C++](#c)
+3. [Common Lisp](#common-lisp)
+
 ### Python
 
 The Python transform requires some dependencies to be installed:
