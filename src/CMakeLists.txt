@@ -1,9 +1,3 @@
-if((${CMAKE_CXX_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_CXX_COMPILER_ID}
-                                                     STREQUAL Clang))
-  add_compile_options(-mtune=generic)
-  add_compile_options(-pthread)
-endif()
-
 # specify source files
 file(GLOB ${PROJECT_NAME}_H ${CMAKE_SOURCE_DIR}/include/${PROJECT_NAME}/*.hpp)
 file(GLOB ${PROJECT_NAME}_SRC *.cpp)
