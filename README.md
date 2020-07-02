@@ -8,18 +8,21 @@ Transform to apply 'stack stamping' protections to a binary.
 
 ## Abstract
 
-Stack stamping is a technique to help mitigate ROP style attacks.  This is done
-by 'stamping' the return address on the stack, thus encrypting it.  Before it is
-popped off the stack and used, it is decrypted by 'unstamping' it.  This can be
-an efficient protection, as no registers are needed, and while flags are affected,
-they are only affected at function entry/exits where they do not need to be
-preserved.  By encoding and decoding this return address, an attacker has a more
-difficult task, since the replacement data would need to be properly encoded,
-such that when it is unstamped, it results in the desired address.
+Stack stamping is a technique to help mitigate
+<abbr title="Return Oriented Programming">ROP</abbr> style attacks.
+This is done by 'stamping' the return address on the stack, thus
+encrypting it.  Before it is popped off the stack and used, it is
+decrypted by 'un-stamping' it.  This can be an efficient protection,
+as no registers are needed, and while flags are affected, they are
+only affected at function entry/exits where they do not need to be
+preserved.  By encoding and decoding this return address, an attacker
+has a more difficult task, since the replacement data would need to be
+properly encoded, such that when it is un-stamped, it results in the
+desired address.
 
 ## Building
 
-This repostiory contains three implementations of stack-stamping in three
+This repository contains three implementations of stack-stamping in three
 different languages:
 
 ### C++
@@ -36,7 +39,7 @@ Building from source also depends on [CMake](https://cmake.org) being installed.
 
 #### Options
 
-We add the folliwng CMake options during building:
+We add the filling CMake options during building:
 
 * `GTIRB_STACK_STAMP_ENABLE_TESTS`: Set to `OFF` to disable the downloading of
   Google Test and the building of the test executable. `ON` by default.
@@ -74,7 +77,7 @@ and [ddisasm](https://github.com/grammatech/ddisasm) on your PATH.
 
 ### Python
 
-The Python transform requires some dependnecies to be installed:
+The Python transform requires some dependencies to be installed:
 
 ```sh
 pip3 install gtirb-capstone gtirb-functions capstone keystone-engine
