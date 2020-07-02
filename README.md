@@ -39,9 +39,9 @@ Building from source also depends on [CMake](https://cmake.org) being installed.
 We add the folliwng CMake options during building:
 
 * `GTIRB_STACK_STAMP_ENABLE_TESTS`: Set to `OFF` to disable the downloading of
-  Google Test and the building of the test executable.
+  Google Test and the building of the test executable. `ON` by default.
 * `GTIRB_STACK_STAMP_BUILD_SHARED_LIBS`: Set to `OFF` to build static libraries
-  instead of dybnamic ones.
+  instead of dybnamic ones. `ON` by default.
 
 #### On Linux
 
