@@ -97,7 +97,41 @@ python3 -m gtirb_stack_stamp
 
 ### Common Lisp
 
-TODO
+The Common Lisp transform requires the following external libraries:
+- [Capstone](https://github.com/aquynh/capstone)
+- [Keystone](https://github.com/keystone-engine/keystone)
+
+and the following common lisp packages
+([gtirb](https://github.com/grammatech/gtirb),
+ [gtirb-functions](https://github.com/grammatech/gtirb-functions),
+ [gtirb-capstone](https://github.com/grammatech/gtirb-capstone))
+which may be installed via QuickLisp:
+
+1. Clone this repository into your `~/quicklisp/local-projects` directory
+    ```sh
+    git clone https://github.com/grammatech/gtirb-stack-stamp
+    ```
+
+2. Load `gtirb-stack-stamp` and all dependencies.
+    ```lisp
+    (ql:quickload :gtirb-stack-stamp)
+    ```
+
+To run the transform at the REPL:
+```lisp
+(write-gtirb (stack-stamp (drop-cfi (read-gtirb "in.gtirb"))) "out.gtirb")
+```
+
+To build the command line executable:
+```sh
+sbcl --eval '(ql:quickload :gtirb-stack-stamp)' \
+     --eval '(asdf:make :gtirb-stack-stamp :type :program :monolithic t)'
+```
+
+To invoke the command line utility thus generated:
+```sh
+./stack-stamp --help
+```
 
 ## Copyright and Acknowledgments
 
