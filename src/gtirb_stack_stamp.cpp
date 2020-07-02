@@ -78,7 +78,7 @@ gtirb_stack_stamp::CapstoneExecution::CapstoneExecution(
   const uint8_t* RawBytes;
   std::vector<uint8_t> RawBytesVector;
   if (auto* BI = Block.getByteInterval();
-      BI->getSize() == BI->getInitializedSize()) {
+      Block.getOffset() + Block.getSize() <= BI->getInitializedSize()) {
     RawBytes = Block.rawBytes<uint8_t>();
   } else {
     std::copy(Block.bytes_begin<uint8_t>(), Block.bytes_end<uint8_t>(),
