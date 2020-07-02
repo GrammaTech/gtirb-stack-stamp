@@ -1,7 +1,5 @@
 # GTIRB Stack Stamp
 
-TRL: 6
-
 Transform to apply 'stack stamping' protections to a binary.
 
 ![stack-stamp signature graphic.](.stack-stamp.svg)
