@@ -63,28 +63,28 @@ TEST_F(GtirbStackStampFixture, TestInsertInstructions) {
   gtirb_stack_stamp::StackStamper SS{Ctx};
   SS.insertInstructions(*BI, 4, InstructionsToInsert);
 
-  ASSERT_EQ(std::string(BI->bytes_begin<char>(), BI->bytes_end<char>()),
+  EXPECT_EQ(std::string(BI->bytes_begin<char>(), BI->bytes_end<char>()),
             BIContents.substr(0, 4) + std::string(Bytes, Bytes + BytesLen) +
                 BIContents.substr(4, 4));
-  ASSERT_EQ(std::distance(BI->blocks_begin(), BI->blocks_end()), 4);
+  EXPECT_EQ(std::distance(BI->blocks_begin(), BI->blocks_end()), 4);
 
-  ASSERT_EQ(B1->getOffset(), 0);
-  ASSERT_EQ(B1->getSize(), 3);
-  ASSERT_EQ(B2->getOffset(), 2);
-  ASSERT_EQ(B2->getSize(), 4 + BytesLen);
-  ASSERT_EQ(B3->getOffset(), 4);
-  ASSERT_EQ(B3->getSize(), 2 + BytesLen);
-  ASSERT_EQ(B4->getOffset(), 6 + BytesLen);
-  ASSERT_EQ(B4->getSize(), 1);
+  EXPECT_EQ(B1->getOffset(), 0);
+  EXPECT_EQ(B1->getSize(), 3);
+  EXPECT_EQ(B2->getOffset(), 2);
+  EXPECT_EQ(B2->getSize(), 4 + BytesLen);
+  EXPECT_EQ(B3->getOffset(), 4);
+  EXPECT_EQ(B3->getSize(), 2 + BytesLen);
+  EXPECT_EQ(B4->getOffset(), 6 + BytesLen);
+  EXPECT_EQ(B4->getSize(), 1);
 
-  ASSERT_EQ(std::distance(BI->symbolic_expressions_begin(),
+  EXPECT_EQ(std::distance(BI->symbolic_expressions_begin(),
                           BI->symbolic_expressions_end()),
             3);
   std::set<uint64_t> Offsets{{2, 4 + BytesLen, 6 + BytesLen}};
   const auto Pred = [&Offsets](uint64_t Off) { return Offsets.count(Off); };
 
   for (auto SEE : BI->symbolic_expressions()) {
-    ASSERT_PRED1(Pred, SEE.getOffset());
+    EXPECT_PRED1(Pred, SEE.getOffset());
     Offsets.erase(SEE.getOffset());
   }
 }
@@ -134,5 +134,5 @@ TEST_F(GtirbStackStampFixture, TestStackStamp) {
   std::remove(TempFile);
 
   ASSERT_EQ(ReturnCode, EXIT_SUCCESS);
-  ASSERT_EQ(Output, "Factorial(10)=3628800");
+  EXPECT_EQ(Output, "Factorial(10)=3628800");
 }
