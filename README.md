@@ -23,6 +23,26 @@ desired address.
 This repository contains three implementations of stack-stamping in three
 different languages:
 
+### Python
+
+The Python transform requires some dependencies to be installed:
+
+```sh
+pip3 install gtirb-capstone gtirb-functions capstone keystone-engine
+```
+
+To starting using it, run:
+
+```sh
+python3 setup.py develop
+```
+
+To invoke the command line utility thus generated:
+
+```sh
+python3 -m gtirb_stack_stamp
+```
+
 ### C++
 
 This transform depends on the following libraries:
@@ -72,26 +92,6 @@ build/bin/test-gtirb-stack-stamp
 
 You will need [gtirb-pprinter](https://github.com/grammatech/gtirb-pprinter)
 and [ddisasm](https://github.com/grammatech/ddisasm) on your PATH.
-
-### Python
-
-The Python transform requires some dependencies to be installed:
-
-```sh
-pip3 install gtirb-capstone gtirb-functions capstone keystone-engine
-```
-
-To starting using it, run:
-
-```sh
-python3 setup.py develop
-```
-
-To invoke the command line utility thus generated:
-
-```sh
-python3 -m gtirb_stack_stamp
-```
 
 ### Common Lisp
 
