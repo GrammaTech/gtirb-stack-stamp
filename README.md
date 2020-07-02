@@ -45,7 +45,10 @@ The generated command-line utility will then be available in `build/bin`.
 
 #### Windows
 
-TODO
+Currently, [some](https://github.com/keystone-engine/keystone/issues/471)
+[issues](https://github.com/keystone-engine/keystone/issues/472) are preventing
+Keystone from being built on Windows, so the C++ version of gtirb-stack-stamp is
+buildable on Linux only for the time being.
 
 ### Python
 
