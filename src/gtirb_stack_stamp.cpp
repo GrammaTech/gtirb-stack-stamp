@@ -235,9 +235,9 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
   assert(Block.getByteInterval() && "Block must belong to a byte interval");
 
   CapstoneExecution Disasm{*this, Block};
-  size_t NumInstrcutions = Disasm.getNumInstructions();
-  return NumInstrcutions != 0 &&
-         Disasm.getInstructions()[NumInstrcutions - 1].id == X86_INS_RET;
+  size_t NumInstructions = Disasm.getNumInstructions();
+  return NumInstructions != 0 &&
+         Disasm.getInstructions()[NumInstructions - 1].id == X86_INS_RET;
 }
 
 void gtirb_stack_stamp::StackStamper::stampFunction(
