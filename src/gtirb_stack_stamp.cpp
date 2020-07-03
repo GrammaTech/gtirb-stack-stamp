@@ -251,17 +251,16 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
         AllBlocksIt != AllBlocks->end()) {
       const auto& BlockIds = AllBlocksIt->second;
       const auto& Cfg = M->getIR()->getCFG();
+      // A tail call can be seen as a single, unconditional branch edge going
+      // from inside a function to outside a function.
       if (auto Vert = gtirb::getVertex(&Block, Cfg)) {
-        // A tail call can be seen as a single, unconditional branch edge going
-        // from inside a function to outside a function.
+        // If there isn't exactly one outgoing edge, then it is not a tail call.
         auto [Begin, End] = boost::out_edges(*Vert, Cfg);
-        bool FoundOne = false;
-        for (const auto& Edge : boost::make_iterator_range(Begin, End)) {
-          if (FoundOne) {
-            // Multiple outgoing edges, therefore not a tail call.
-            return false;
-          }
+        if (Begin == End || std::next(Begin) != End) {
+          return false;
+        }
 
+        for (const auto& Edge : boost::make_iterator_range(Begin, End)) {
           auto* Target = Cfg[boost::target(Edge, Cfg)];
           if (!Target || BlockIds.count(Target->getUUID())) {
             // Target of edge is in this function, therefore not a tail call.
@@ -284,12 +283,7 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
             return false;
           }
 
-          // It looks like a tail call, but are there more elements in this
-          // iterator?
-          FoundOne = true;
-        }
-
-        if (FoundOne) {
+          // This is a tail call!
           return true;
         }
       }
