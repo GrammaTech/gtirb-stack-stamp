@@ -217,15 +217,13 @@ void gtirb_stack_stamp::StackStamper::stampExitBlock(
   CapstoneExecution Disasm{Capstone, Block};
 
   uint64_t Offset = Block.getOffset();
-  for (size_t I = 0; I < Disasm.getNumInstructions(); I++) {
-    const cs_insn& Insn = Disasm.getInstructions()[I];
-    if (I == Disasm.getNumInstructions() - 1) {
-      insertInstructions(*Block.getByteInterval(), Offset,
-                         getStampAssembly(FunctionId));
-      break;
-    } else {
+  if (size_t NumInsn = Disasm.getNumInstructions()) {
+    for (size_t I = 0; I < NumInsn - 1; I++) {
+      const cs_insn& Insn = Disasm.getInstructions()[I];
       Offset += Insn.size;
     }
+    insertInstructions(*Block.getByteInterval(), Offset,
+                       getStampAssembly(FunctionId));
   }
 }
 
