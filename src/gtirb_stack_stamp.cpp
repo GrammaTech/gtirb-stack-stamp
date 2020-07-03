@@ -250,8 +250,9 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
               ->getSection()
               ->getModule()
               ->getAuxData<gtirb::schema::FunctionBlocks>()) {
-    if (AllBlocks->count(FunctionId)) {
-      const auto& BlockIds = AllBlocks->at(FunctionId);
+    if (auto AllBlocksIt = AllBlocks->find(FunctionId);
+        AllBlocksIt != AllBlocks->end()) {
+      const auto& BlockIds = AllBlocksIt->second;
       const auto& Cfg =
           Block.getByteInterval()->getSection()->getModule()->getIR()->getCFG();
       if (auto Vert = gtirb::getVertex(&Block, Cfg)) {
