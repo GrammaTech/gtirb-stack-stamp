@@ -87,9 +87,11 @@ public:
   /// \brief Is this code block an exit block; that is, does it end in a
   /// return instruction?
   ///
-  /// \param Block The code block to check. This block must
-  /// have a byte interval.
-  bool isExitBlock(const gtirb::CodeBlock& Block) const;
+  /// \param FunctionID The function to check.
+  /// \param Block The code block in the given function to check. This block
+  /// must belong to an IR.
+  bool isExitBlock(const gtirb::UUID& FunctionId,
+                   const gtirb::CodeBlock& Block) const;
 
 private:
   gtirb::Context& Ctx;

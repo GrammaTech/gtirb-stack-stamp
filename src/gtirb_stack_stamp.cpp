@@ -219,7 +219,7 @@ void gtirb_stack_stamp::StackStamper::stampExitBlock(
   uint64_t Offset = Block.getOffset();
   for (size_t I = 0; I < Disasm.getNumInstructions(); I++) {
     const cs_insn& Insn = Disasm.getInstructions()[I];
-    if (Insn.id == X86_INS_RET) {
+    if (I == Disasm.getNumInstructions() - 1) {
       insertInstructions(*Block.getByteInterval(), Offset,
                          getStampAssembly(FunctionId));
       break;
@@ -230,13 +230,78 @@ void gtirb_stack_stamp::StackStamper::stampExitBlock(
 }
 
 bool gtirb_stack_stamp::StackStamper::isExitBlock(
-    const gtirb::CodeBlock& Block) const {
-  assert(Block.getByteInterval() && "Block must belong to a byte interval");
+    const gtirb::UUID& FunctionId, const gtirb::CodeBlock& Block) const {
+  assert(Block.getByteInterval() && Block.getByteInterval()->getSection() &&
+         Block.getByteInterval()->getSection()->getModule() &&
+         Block.getByteInterval()->getSection()->getModule()->getIR() &&
+         "Block must belong to an IR.");
 
+  // If the block ends in a return, then it is an exit block.
   CapstoneExecution Disasm{Capstone, Block};
   size_t NumInstructions = Disasm.getNumInstructions();
-  return NumInstructions != 0 &&
-         Disasm.getInstructions()[NumInstructions - 1].id == X86_INS_RET;
+  if (NumInstructions == 0) {
+    return false;
+  }
+  if (Disasm.getInstructions()[NumInstructions - 1].id == X86_INS_RET) {
+    return true;
+  }
+
+  // If the block exits this function via a tail call, then it is an exit block.
+  if (const auto* AllBlocks =
+          Block.getByteInterval()
+              ->getSection()
+              ->getModule()
+              ->getAuxData<gtirb::schema::FunctionBlocks>()) {
+    if (AllBlocks->count(FunctionId)) {
+      const auto& BlockIds = AllBlocks->at(FunctionId);
+      const auto& Cfg =
+          Block.getByteInterval()->getSection()->getModule()->getIR()->getCFG();
+      if (auto Vert = gtirb::getVertex(&Block, Cfg)) {
+        // A tail call can be seen as a single, unconditional branch edge going
+        // from inside a function to outside a function.
+        auto [Begin, End] = boost::out_edges(*Vert, Cfg);
+        bool FoundOne = false;
+        for (const auto& Edge : boost::make_iterator_range(Begin, End)) {
+          if (FoundOne) {
+            // Multiple outgoing edges, therefore not a tail call.
+            return false;
+          }
+
+          auto* Target = Cfg[boost::target(Edge, Cfg)];
+          if (!Target || BlockIds.count(Target->getUUID())) {
+            // Target of edge is in this function, therefore not a tail call.
+            return false;
+          }
+
+          const auto& EdgeLabel = Cfg[Edge];
+          if (!EdgeLabel) {
+            // Has no edge label, therefore we can't tell what this block is.
+            return false;
+          }
+
+          if (std::get<gtirb::EdgeType>(*EdgeLabel) !=
+                  gtirb::EdgeType::Branch ||
+              std::get<gtirb::DirectEdge>(*EdgeLabel) !=
+                  gtirb::DirectEdge::IsDirect ||
+              std::get<gtirb::ConditionalEdge>(*EdgeLabel) !=
+                  gtirb::ConditionalEdge::OnFalse) {
+            // Not an unconditional direct branch, therefore not a tail call.
+            return false;
+          }
+
+          // It looks like a tail call, but are there more elements in this
+          // iterator?
+          FoundOne = true;
+        }
+
+        if (FoundOne) {
+          return true;
+        }
+      }
+    }
+  }
+  // It is not an exit block.
+  return false;
 }
 
 void gtirb_stack_stamp::StackStamper::stampFunction(
@@ -258,7 +323,7 @@ void gtirb_stack_stamp::StackStamper::stampFunction(
   for (const auto& BlockId : AllBlocks->at(FunctionId)) {
     if (auto* Block = dyn_cast_or_null<gtirb::CodeBlock>(
             gtirb::Node::getByUUID(Ctx, BlockId));
-        Block && isExitBlock(*Block)) {
+        Block && isExitBlock(FunctionId, *Block)) {
       ExitBlocks.push_back(Block);
     }
   }
