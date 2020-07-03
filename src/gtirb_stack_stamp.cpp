@@ -245,16 +245,12 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
   }
 
   // If the block exits this function via a tail call, then it is an exit block.
-  if (const auto* AllBlocks =
-          Block.getByteInterval()
-              ->getSection()
-              ->getModule()
-              ->getAuxData<gtirb::schema::FunctionBlocks>()) {
+  const auto* M = Block.getByteInterval()->getSection()->getModule();
+  if (const auto* AllBlocks = M->getAuxData<gtirb::schema::FunctionBlocks>()) {
     if (auto AllBlocksIt = AllBlocks->find(FunctionId);
         AllBlocksIt != AllBlocks->end()) {
       const auto& BlockIds = AllBlocksIt->second;
-      const auto& Cfg =
-          Block.getByteInterval()->getSection()->getModule()->getIR()->getCFG();
+      const auto& Cfg = M->getIR()->getCFG();
       if (auto Vert = gtirb::getVertex(&Block, Cfg)) {
         // A tail call can be seen as a single, unconditional branch edge going
         // from inside a function to outside a function.
