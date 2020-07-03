@@ -270,7 +270,7 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
 
           const auto& EdgeLabel = Cfg[Edge];
           if (!EdgeLabel) {
-            // Has no edge label, therefore we can't tell what this block is.
+            // Has no edge label, therefore we can't tell what this edge is.
             return false;
           }
 
