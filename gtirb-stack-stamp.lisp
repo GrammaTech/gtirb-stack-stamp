@@ -21,7 +21,6 @@
 (in-readtable :curry-compose-reader-macros)
 (defmethod size ((obj gtirb-node)) (gtirb:size obj))
 
-
 ;;; Implementation
 (defgeneric stack-stamp (object)
   (:documentation "Apply the stack-stamp transformation.")
@@ -30,28 +29,31 @@
     (mapc #'stack-stamp (modules obj)))
   (:method ((obj module)) (mapc #'stack-stamp (functions obj)))
   (:method ((obj func))
-    (unless (exits obj)
-      (warn "Skipping function without exits: ~s" obj)
-      (return-from stack-stamp))
-    (unless (entries obj)
-      (warn "Skipping function without entries: ~s" obj)
-      (return-from stack-stamp))
-    (let* ((key (int->octets (sxhash obj) 8))
-           (stamp-bytes (asm obj (format nil "xorl $0x~x,(%rsp); ~
-                                              xorl $0x~x,4(%rsp);"
-                                         (octets->uint (subseq key 0 4) 4)
-                                         (octets->uint (subseq key 4) 4)))))
-      (mapc (lambda (entry-block) (setf (bytes entry-block 0 0) stamp-bytes))
-            (entries obj))
-      (mapc
-       (lambda (ret-block)
-         ;; Convert instruction index into byte index.
-         (when-let* ((ins (instructions ret-block))
-                     (ret-ins-pos (position-if [{eql :ret} #'mnemonic] ins))
-                     (ret-byte-pos (reduce #'+ (subseq ins 0 ret-ins-pos)
-                                           :key #'size)))
-           (setf (bytes ret-block ret-byte-pos ret-byte-pos) stamp-bytes)))
-       (returns obj)))))
+    (unless (entries obj) (return-from stack-stamp))
+    (let ((exits (append (returns obj) (tail-calls obj))))
+      (unless exits (return-from stack-stamp))
+      (let* ((key (int->octets (sxhash obj) 8))
+             (stamp-bytes (asm obj (format nil "xorl $0x~x,(%rsp); ~
+                                                xorl $0x~x,4(%rsp);"
+                                           (octets->uint (subseq key 0 4) 4)
+                                           (octets->uint (subseq key 4) 4)))))
+        #+debug (format t "ENTRANCE: 0x~x~%" (address (first (entries obj))))
+        (mapc (lambda (entry-block)
+                (setf (bytes entry-block 0 0) stamp-bytes))
+              (entries obj))
+        (mapc (lambda (exit-block)
+                (if-let* ((ins (instructions exit-block))
+                          ;; Ret instruction *or* last instruction (tail call).
+                          (ins-pos (or (position-if [{eql :ret} #'mnemonic] ins)
+                                       (1- (length ins))))
+                          ;; Convert instruction index into byte index.
+                          (byte-pos (reduce #'+ (subseq ins 0 ins-pos)
+                                            :key #'size)))
+                  (progn
+                    #+debug (format t "EXIT: 0x~x~%" (address exit-block))
+                    (setf (bytes exit-block byte-pos byte-pos) stamp-bytes))
+                  (error "Unable to find stamp return block for ~s" obj)))
+              exits)))))
 
 (defmethod stack-stamp :around ((obj gtirb-node)) (call-next-method) obj)
 
@@ -131,7 +133,7 @@
               :documentation "output a binary executable"))
            &aux ir)
   "Apply \"stack stamp\" protections to a binary executable." ""
-  (when help (show-help-for-stamp))
+  (when help (show-help-for-ss))
   (unless (or gtirb asm binary)
     (error "Must specify at least one output type: gtirb, asm, or binary."))
   (setf ir
