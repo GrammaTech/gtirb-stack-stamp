@@ -260,32 +260,30 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
           return false;
         }
 
-        for (const auto& Edge : boost::make_iterator_range(Begin, End)) {
-          auto* Target = Cfg[boost::target(Edge, Cfg)];
-          if (!Target || BlockIds.count(Target->getUUID())) {
-            // Target of edge is in this function, therefore not a tail call.
-            return false;
-          }
-
-          const auto& EdgeLabel = Cfg[Edge];
-          if (!EdgeLabel) {
-            // Has no edge label, therefore we can't tell what this edge is.
-            return false;
-          }
-
-          if (std::get<gtirb::EdgeType>(*EdgeLabel) !=
-                  gtirb::EdgeType::Branch ||
-              std::get<gtirb::DirectEdge>(*EdgeLabel) !=
-                  gtirb::DirectEdge::IsDirect ||
-              std::get<gtirb::ConditionalEdge>(*EdgeLabel) !=
-                  gtirb::ConditionalEdge::OnFalse) {
-            // Not an unconditional direct branch, therefore not a tail call.
-            return false;
-          }
-
-          // This is a tail call!
-          return true;
+        const auto& Edge = *Begin;
+        auto* Target = Cfg[boost::target(Edge, Cfg)];
+        if (!Target || BlockIds.count(Target->getUUID())) {
+          // Target of edge is in this function, therefore not a tail call.
+          return false;
         }
+
+        const auto& EdgeLabel = Cfg[Edge];
+        if (!EdgeLabel) {
+          // Has no edge label, therefore we can't tell what this edge is.
+          return false;
+        }
+
+        if (std::get<gtirb::EdgeType>(*EdgeLabel) != gtirb::EdgeType::Branch ||
+            std::get<gtirb::DirectEdge>(*EdgeLabel) !=
+                gtirb::DirectEdge::IsDirect ||
+            std::get<gtirb::ConditionalEdge>(*EdgeLabel) !=
+                gtirb::ConditionalEdge::OnFalse) {
+          // Not an unconditional direct branch, therefore not a tail call.
+          return false;
+        }
+
+        // This is a tail call!
+        return true;
       }
     }
   }
