@@ -51,18 +51,18 @@ def stamp_function(module, func, ctx, logger=logging.Logger("null")):
 
     logger.debug("- Entry blocks")
     for b in func.get_entry_blocks():
+        print("ENTRANCE: %#x" % b.address)
         ctx.modify_block_insert(module, b, encoding, 0, logger=logger)
 
     logger.debug("- Exit blocks")
     for b in func.get_exit_blocks():
-        offset = 0
-        # Find the offset of the ret instruction, and insert our bytes just
+        print("EXIT: %#x" % b.address)
+        # Find the offset of the last instruction, and insert our bytes just
         # before.
-        for i in GtirbInstructionDecoder(module.isa).get_instructions(b):
-            if i.mnemonic == "ret":
-                ctx.modify_block_insert(
-                    module, b, encoding, offset, logger=logger
-                )
-                break
-            else:
-                offset += i.size
+        offset = 0
+        instructions = tuple(
+            GtirbInstructionDecoder(module.isa).get_instructions(b)
+        )
+        for instruction in instructions[:-1]:
+            offset += instruction.size
+        ctx.modify_block_insert(module, b, encoding, offset, logger=logger)
