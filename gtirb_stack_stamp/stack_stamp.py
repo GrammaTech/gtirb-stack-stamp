@@ -51,12 +51,10 @@ def stamp_function(module, func, ctx, logger=logging.Logger("null")):
 
     logger.debug("- Entry blocks")
     for b in func.get_entry_blocks():
-        print("ENTRANCE: %#x" % b.address)
         ctx.modify_block_insert(module, b, encoding, 0, logger=logger)
 
     logger.debug("- Exit blocks")
     for b in func.get_exit_blocks():
-        print("EXIT: %#x" % b.address)
         # Find the offset of the last instruction, and insert our bytes just
         # before.
         offset = 0
