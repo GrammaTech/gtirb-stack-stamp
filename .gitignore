@@ -4,6 +4,9 @@ __pycache__/
 .mypy_cache/
 /gtirb_stack_stamp.egg-info/
 /build/
+/dist/
+/tests/factorial
+/tests/factorial.gtirb
 
 *.fasl
 
