@@ -86,7 +86,7 @@ test-python-windows:
     - powershell -Command '$global:ProgressPreference = "SilentlyContinue"; Expand-Archive ddisasm-artifacts.zip'
     - cp -r ddisasm-artifacts/DDISASM-*-win64 ./
     # Install gtirb helper libraries
-    - curl -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-1.0.1-py3-none-any.whl?job=build --output gtirb_functions-1.0.1-py3-none-any.whl
+    - curl -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-1.0.2-py3-none-any.whl?job=build --output gtirb_functions-1.0.2-py3-none-any.whl
     - curl -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts/master/raw/dist/gtirb_capstone-1.0.0-py3-none-any.whl?job=build --output gtirb_capstone-1.0.0-py3-none-any.whl
     - python -m pip install gtirb_capstone-1.0.0-py3-none-any.whl
     - python -m pip install gtirb_functions-1.0.1-py3-none-any.whl
