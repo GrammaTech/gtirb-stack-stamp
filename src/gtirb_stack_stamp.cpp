@@ -274,11 +274,9 @@ bool gtirb_stack_stamp::StackStamper::isExitBlock(
         }
 
         if (std::get<gtirb::EdgeType>(*EdgeLabel) != gtirb::EdgeType::Branch ||
-            std::get<gtirb::DirectEdge>(*EdgeLabel) !=
-                gtirb::DirectEdge::IsDirect ||
             std::get<gtirb::ConditionalEdge>(*EdgeLabel) !=
                 gtirb::ConditionalEdge::OnFalse) {
-          // Not an unconditional direct branch, therefore not a tail call.
+          // Not an unconditional branch, therefore not a tail call.
           return false;
         }
 
