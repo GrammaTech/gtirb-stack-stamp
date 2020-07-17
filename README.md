@@ -1,6 +1,14 @@
 # GTIRB Stack Stamp
 
-Transform to apply 'stack stamping' protections to a binary.
+This repository holds example implementations of binary
+transformations implemented over top of
+[GTIRB](https://github.com/grammatech/gtirb).  See the accompanying
+[GTIRB
+Tutorial](https://grammatech.github.io/gtirb/md_stack-stamp.html) for
+more information.
+
+Specifically, this example repository implements a transform to apply
+'stack stamping' protections to a binary.
 
 ![stack-stamp signature graphic.](.stack-stamp.svg)
 
