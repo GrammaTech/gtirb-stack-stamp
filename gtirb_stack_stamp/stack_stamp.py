@@ -27,6 +27,14 @@ def get_function_stamp_value(func):
 
 def apply_stack_stamp(ir, logger=logging.Logger("null"), context=None):
     logger.info("Preparing IR for rewriting...")
+
+    # Remove addresses from byte intervals, because some of them
+    # will grow as part of this operation, and we don't want them
+    # to overlap as a result.
+    for bi in ir.byte_intervals:
+        bi.address = None
+
+    # Stamp each function in the IR.
     ctx = RewritingContext(ir) if context is None else context
     for m in ctx.ir.modules:
         functions = Function.build_functions(m)
