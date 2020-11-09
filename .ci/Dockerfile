@@ -1,7 +1,27 @@
 FROM ubuntu:18.04
 
-RUN apt-get update -y && apt-get install -y build-essential curl cmake git \
-        libprotobuf-dev make pkg-config python3-pip python3-protobuf \
+
+# Setup formatting
+RUN apt-get update -y && apt-get install -y clang-format curl elpa-paredit \
+        emacs-nox git sbcl slime python3-pip python3-protobuf
+RUN pip3 install "virtualenv<20.0.0"
+RUN pip3 install pre-commit
+# Install the lisp-format pre-commit format checker.
+RUN curl https://raw.githubusercontent.com/eschulte/lisp-format/master/lisp-format > /usr/bin/lisp-format
+RUN chmod +x /usr/bin/lisp-format
+RUN echo "(add-to-list 'load-path \"/usr/share/emacs/site-lisp/\")" > /root/.lisp-formatrc
+
+COPY ./.pre-commit-config.yaml /gt/gtirb-stack-stamp/.pre-commit-config.yaml
+WORKDIR /gt/gtirb-stack-stamp
+RUN git init
+RUN pre-commit install-hooks
+WORKDIR /
+RUN rm -rf /gt/
+
+
+# Setup build
+RUN apt-get install -y build-essential cmake \
+        libprotobuf-dev make pkg-config \
         software-properties-common unzip wget
 RUN python3 -m pip install --upgrade setuptools wheel
 
@@ -12,19 +32,11 @@ RUN add-apt-repository ppa:mhier/libboost-latest && \
     apt-get -y install libboost${BOOST_VERSION}-dev
 
 # Install Capstone
-COPY libcapstone-dev_*_amd64.deb /
+COPY libcapstone-dev_4.0.1-gt2_amd64.deb /
 RUN dpkg -i libcapstone-dev_*_amd64.deb && rm libcapstone-dev_*_amd64.deb
 
-# Install GTIRB APIs
-COPY *.zip ./
-RUN unzip -o gtirb-packages.zip \
-    && unzip -o gtirb-pprinter-packages.zip \
-    && unzip -o ddisasm-packages.zip \
-    && dpkg -i *.deb \
-    && rm -rf *.deb *.zip
-
 # Install Keystone
-COPY keystone/ keystone/
+RUN git clone https://github.com/keystone-engine/keystone.git
 RUN cd keystone && \
     mkdir build && \
     cd build && \
@@ -37,14 +49,6 @@ RUN ldconfig /usr/local/lib
 
 # Install Python cs/ks
 RUN pip3 install capstone keystone-engine
-
-# Download GTIRB helper libraries.
-RUN wget -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-1.0.3-py3-none-any.whl?job=build -O gtirb_functions-1.0.3-py3-none-any.whl
-
-RUN wget -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts/master/raw/dist/gtirb_capstone-1.0.0-py3-none-any.whl?job=build -O gtirb_capstone-1.0.0-py3-none-any.whl
-
-RUN python3 -m pip install gtirb_capstone-*-py3-none-any.whl && \
-    python3 -m pip install gtirb_functions-*-py3-none-any.whl
 
 # Common Lisp Setup
 RUN apt-get install -y sbcl

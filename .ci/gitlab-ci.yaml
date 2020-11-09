@@ -7,53 +7,61 @@ variables:
   BUILD_IMAGE_NAME: '${DOCKER_REGISTRY}/${CI_PROJECT_PATH}/build'
 
 stages:
-  - build-images
   - check-format
+  - setup-apt-repo
   - test
   - test-windows
   - build
   - test_package
   - cleanup
 
-build-images:
-  # rules:
-  #   only changes in .ci/Docker.formatter
-  stage: build-images
-  tags:
-    - shell-exec
-  script:
-    # download packages
-    - cp /u4/TARBALLS/debloat/pkgs/libcapstone-dev_4.0.1-gt2_amd64.deb ./
-    - wget -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 -O gtirb-packages.zip
-    - wget -L https://git.grammatech.com/rewriting/gtirb-pprinter/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 -O gtirb-pprinter-packages.zip
-    - wget -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 -O ddisasm-packages.zip
-    - git clone https://github.com/keystone-engine/keystone.git
-    # run docker
-    - docker build -t $FORMATTER_IMAGE_NAME -f .ci/Dockerfile.formatter .
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
-    - docker push $FORMATTER_IMAGE_NAME
-    - docker build -t $BUILD_IMAGE_NAME --no-cache -f .ci/Dockerfile.build .
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $DOCKER_REGISTRY
-    - docker push $BUILD_IMAGE_NAME
+.setup-apt-repo: &setup-apt-repo |
+  echo -e "\ndeb [trusted=yes] file:$(pwd)/apt-repo ./\n" >> /etc/apt/sources.list
+
+.setup-packages: &setup-packages |
+  python3 -m pip install dataclasses
+  python3 -m pip install gtirb --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/565/packages/pypi/simple
+  python3 -m pip install gtirb-capstone --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1350/packages/pypi/simple
+  python3 -m pip install gtirb-functions --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1349/packages/pypi/simple
+  echo -e "\ndeb [trusted=yes] file:$(pwd)/apt-repo ./\n" >> /etc/apt/sources.list
+  apt-get update -y && apt-get install -y --allow-unauthenticated gtirb-pprinter ddisasm
+
+
+default:
+  tags: ['kubernetes']
+  image: $DOCKER_REGISTRY/$CI_PROJECT_PATH
 
 check-format:
   stage: check-format
-  tags:
-    - docker-exec
-  image: $FORMATTER_IMAGE_NAME
   script:
     - pre-commit run --all-files
 
+setup-apt-repo:
+  stage: setup-apt-repo
+  artifacts:
+    name: "$CI_COMMIT_REF_NAME-$CI_JOB_NAME"
+    paths:
+      - apt-repo
+  script:
+    - mkdir apt-repo
+    - cd apt-repo
+    - curl -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 --output "gtirb-ubuntu18-artifacts.zip"
+    - unzip gtirb-ubuntu18-artifacts.zip
+    - curl -L https://git.grammatech.com/rewriting/gtirb-pprinter/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 --output "gtirb-pprinter-ubuntu18-artifacts.zip"
+    - unzip gtirb-pprinter-ubuntu18-artifacts.zip
+    - curl -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 --output "ddisasm-ubuntu18-artifacts.zip"
+    - unzip ddisasm-ubuntu18-artifacts.zip
+    - dpkg-scanpackages . /dev/null > Packages
+
 test-python:
   stage: test
-  tags:
-    - docker-exec
-  image: $BUILD_IMAGE_NAME
+  needs: ['setup-apt-repo']
   artifacts:
     name: "$CI_COMMIT_REF_NAME-$CI_JOB_NAME"
     paths:
       - tests/factorial
   script:
+    - *setup-packages
     - python3 setup.py test
 
 test-python-windows:
@@ -95,9 +103,7 @@ test-python-windows:
 
 test-common-lisp:
   stage: test
-  tags:
-    - docker-exec
-  image: $BUILD_IMAGE_NAME
+  needs: ['setup-apt-repo']
   script:
     - ln -s $(pwd) /root/quicklisp/local-projects/gtirb-stack-stamp
     - sbcl --eval '(ql:quickload :gtirb-stack-stamp)' --eval '(asdf:make :gtirb-stack-stamp :type :program :monolithic t)'
@@ -105,10 +111,10 @@ test-common-lisp:
 
 test-cpp:
   stage: test
-  tags:
-    - docker-exec
-  image: $BUILD_IMAGE_NAME
+  needs: ['setup-apt-repo']
   script:
+    - *setup-apt-repo
+    - apt-get update -y && apt-get install -y libgtirb-dev ddisasm gtirb-pprinter
     - cmake ./ -Bbuild -DCMAKE_BUILD_TYPE=Debug
     - cd build
     - make -j8
@@ -117,31 +123,19 @@ test-cpp:
 
 build:
   stage: build
-  tags:
-    - docker-exec
-  image: $BUILD_IMAGE_NAME
+  needs: ['setup-apt-repo']
   artifacts:
     paths:
     - dist/gtirb_stack_stamp-?.?.?-py3-none-any.whl
     expire_in: 1 weeks
   script:
+    - *setup-packages
     - python3 setup.py sdist bdist_wheel
 
 test_package:
   variables:
     GIT_STRATEGY: none
   stage: test_package
-  tags:
-    - docker-exec
-  image: $BUILD_IMAGE_NAME
   script:
+    - *setup-packages
     - for f in dist/*.whl; do python3 -m pip install $f; done
-
-# cleanup:
-#   stage: cleanup
-#   tags:
-#     - shell-exec
-#   script:
-#     - export LOCAL_IMAGE_BASE=$(echo ${LOCAL_IMAGE_NAME} |  tr A-Z a-z)
-#     - docker rmi -f ${LOCAL_IMAGE_BASE}
-#   when: always
