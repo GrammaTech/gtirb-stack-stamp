@@ -32,8 +32,15 @@ RUN add-apt-repository ppa:mhier/libboost-latest && \
     apt-get -y install libboost${BOOST_VERSION}-dev
 
 # Install Capstone
-COPY libcapstone-dev_4.0.1-gt2_amd64.deb /
-RUN dpkg -i libcapstone-dev_*_amd64.deb && rm libcapstone-dev_*_amd64.deb
+WORKDIR /gt/apt-repo
+COPY libcapstone-dev_*_amd64.deb /gt/apt-repo/
+RUN dpkg-scanpackages . /dev/null > Packages
+RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak
+RUN printf "\ndeb [trusted=yes] file:$(pwd) ./\n" >> /etc/apt/sources.list
+RUN apt-get update -y && apt-get install -y libcapstone-dev
+RUN mv /etc/apt/sources.list.bak /etc/apt/sources.list
+WORKDIR /
+RUN rm -rf /gt/apt-repo
 
 # Install Keystone
 RUN git clone https://github.com/keystone-engine/keystone.git
