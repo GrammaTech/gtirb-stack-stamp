@@ -52,6 +52,8 @@ setup-apt-repo:
 test-python:
   stage: test
   needs: ['setup-apt-repo']
+  # We upload tests/factorial so that test-python-windows can try to stack
+  # stamp an ELF binary, and we can't generate an ELF binary on Windows.
   artifacts:
     name: "$CI_COMMIT_REF_NAME-$CI_JOB_NAME"
     paths:
