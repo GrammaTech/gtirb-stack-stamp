@@ -140,7 +140,7 @@ test_package:
     - for f in dist/*.whl; do python3 -m pip install $f; done
 
 internal-pypi:
-  stage: deploy-to-pypi
+  stage: deploy
   needs: [setup-apt-repo]
   only:
     - master
