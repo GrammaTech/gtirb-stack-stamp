@@ -49,7 +49,7 @@ TEST_F(GtirbStackStampFixture, TestInsertInstructions) {
   std::string BIContents = "\x01\x02\x03\x04\x05\x06\x07\x08";
   gtirb::Context Ctx;
   auto* IR = gtirb::IR::Create(Ctx);
-  auto* M = IR->addModule(Ctx);
+  auto* M = IR->addModule(Ctx, "test");
   auto* S = M->addSection(Ctx, ".text");
   auto* BI = S->addByteInterval(Ctx, BIContents.begin(), BIContents.end());
   auto* B1 = BI->addBlock<gtirb::CodeBlock>(Ctx, 0, 3);
