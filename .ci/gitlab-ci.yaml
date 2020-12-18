@@ -75,10 +75,6 @@ test-python-windows:
     GTIRB_FUNCTIONS_BRANCH: master
   needs: ['test-python']
   script:
-    # Install gtirb python API
-    - curl -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/${GTIRB_BRANCH}/download?job=python-wheel --output "gtirb-wheel.zip"
-    - unzip gtirb-wheel.zip
-    - python -m pip install pip --upgrade && python -m pip install gtirb-*-py*.whl
     # Install gtirb-pprinter
     - curl -L https://git.grammatech.com/rewriting/gtirb-pprinter/-/jobs/artifacts/${GTIRB_PPRINTER_BRANCH}/download?job=build-windows-msvc-relwithdebinfo --output "gtirb-pprinter-artifacts.zip"
     # Below, unzip doesn't work: the unzipped binary will not execute because
@@ -92,11 +88,12 @@ test-python-windows:
     - curl -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/${DDISASM_BRANCH}/download?job=build-windows-msvc-relwithdebinfo --output "ddisasm-artifacts.zip"
     - powershell -Command '$global:ProgressPreference = "SilentlyContinue"; Expand-Archive ddisasm-artifacts.zip'
     - cp -r ddisasm-artifacts/DDISASM-*-win64 ./
-    # Install gtirb helper libraries
-    - curl -L https://git.grammatech.com/rewriting/gtirb-functions/-/jobs/artifacts/master/raw/dist/gtirb_functions-1.0.3-py3-none-any.whl?job=build --output gtirb_functions-1.0.3-py3-none-any.whl
-    - curl -L https://git.grammatech.com/rewriting/gtirb-capstone/-/jobs/artifacts/master/raw/dist/gtirb_capstone-1.0.0-py3-none-any.whl?job=build --output gtirb_capstone-1.0.0-py3-none-any.whl
-    - python -m pip install gtirb_capstone-1.0.0-py3-none-any.whl
-    - python -m pip install gtirb_functions-1.0.3-py3-none-any.whl
+    # Install gtirb & helper libraries
+    - python --version
+    - python -m pip install --upgrade pip && python -m pip install networkx
+    - python -m pip install gtirb --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/565/packages/pypi/simple
+    - python -m pip install gtirb-capstone --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1350/packages/pypi/simple
+    - python -m pip install gtirb-functions --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1349/packages/pypi/simple
     # Run the test
     - PATH="$PATH;$(cygpath -w $(pwd)/DDISASM-*-win64/bin);$(cygpath -w $(pwd)/gtirb_pprinter-*-win64/bin)" cmd.exe /C "C:\\VS\\VC\\Auxiliary\\Build\\vcvars64.bat && python setup.py test"
 
