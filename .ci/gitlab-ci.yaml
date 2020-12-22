@@ -91,7 +91,7 @@ test-python-windows:
     # Install gtirb & helper libraries
     - python --version
     - python -m pip install --upgrade pip && python -m pip install networkx
-    - python -m pip install gtirb --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/565/packages/pypi/simple
+    - python -m pip install gtirb --index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/565/packages/pypi/simple
     - python -m pip install gtirb-capstone --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1350/packages/pypi/simple
     - python -m pip install gtirb-functions --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1349/packages/pypi/simple
     # Run the test
