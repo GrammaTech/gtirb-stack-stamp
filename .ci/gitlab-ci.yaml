@@ -16,10 +16,10 @@ stages:
   echo -e "\ndeb [trusted=yes] file:$(pwd)/apt-repo ./\n" >> /etc/apt/sources.list
 
 .setup-packages: &setup-packages |
-  python3 -m pip install dataclasses
-  python3 -m pip install gtirb --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/565/packages/pypi/simple
-  python3 -m pip install gtirb-capstone --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1350/packages/pypi/simple
-  python3 -m pip install gtirb-functions --extra-index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1349/packages/pypi/simple
+  python3 -m pip install dataclasses networkx
+  python3 -m pip install gtirb --index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/565/packages/pypi/simple
+  python3 -m pip install gtirb-capstone --index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1350/packages/pypi/simple
+  python3 -m pip install gtirb-functions --index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1349/packages/pypi/simple
   echo -e "\ndeb [trusted=yes] file:$(pwd)/apt-repo ./\n" >> /etc/apt/sources.list
   apt-get update -y && apt-get install -y --allow-unauthenticated gtirb-pprinter ddisasm
 
