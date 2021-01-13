@@ -97,13 +97,13 @@ test-python-windows:
     # Run the test
     - PATH="$PATH;$(cygpath -w $(pwd)/DDISASM-*-win64/bin);$(cygpath -w $(pwd)/gtirb_pprinter-*-win64/bin)" cmd.exe /C "C:\\VS\\VC\\Auxiliary\\Build\\vcvars64.bat && python setup.py test"
 
-test-common-lisp:
-  stage: test
-  needs: ['setup-apt-repo']
-  script:
-    - ln -s $(pwd) /root/quicklisp/local-projects/gtirb-stack-stamp
-    - sbcl --eval '(ql:quickload :gtirb-stack-stamp)' --eval '(asdf:make :gtirb-stack-stamp :type :program :monolithic t)'
-    - ./stack-stamp --help
+# test-common-lisp:
+#   stage: test
+#   needs: ['setup-apt-repo']
+#   script:
+#     - ln -s $(pwd) /root/quicklisp/local-projects/gtirb-stack-stamp
+#     - sbcl --eval '(ql:quickload :gtirb-stack-stamp)' --eval '(asdf:make :gtirb-stack-stamp :type :program :monolithic t)'
+#     - ./stack-stamp --help
 
 test-cpp:
   stage: test
