@@ -27,9 +27,6 @@ from gtirb_rewriting import (
 class StampPass(Pass):
     """Add stack stamping instructions to every function."""
 
-    def __init__(self):
-        pass
-
     def begin_module(self, module, functions, context):
         """Register insertions and replacements for the given functions."""
         # Stamp the return address at the entry point of every function.
@@ -45,17 +42,14 @@ class StampPass(Pass):
 
     @patch_constraints(clobbers_flags=True)
     def get_function_stamp_value(self, context):
-        # Just choose a random value for the stamp values.  An option for a
-        # deterministic value is to take a hash of the function name or
-        # beginning EA.
-        random.seed(context.function.get_name())
+        # Use the same seed every time this is called for the same function so
+        # that each entrance and exit uses the same stamp.
+        random.seed(context.function.uuid.int)
         w1 = random.randint(0, 2 ** 32)
         w2 = random.randint(0, 2 ** 32)
-        # gtirb-rewriting saves the flags to the top of the stack, so we need
-        # to stamp at offsets 8 and 12 from the top.
         return f"""
-            xorl $0x{w1:X},8(%rsp)
-            xorl $0x{w2:X},12(%rsp)
+            xorl $0x{w1:X},{context.stack_adjustment}(%rsp)
+            xorl $0x{w2:X},{context.stack_adjustment+4}(%rsp)
         """
 
 
