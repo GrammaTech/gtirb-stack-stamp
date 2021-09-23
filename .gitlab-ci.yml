@@ -4,55 +4,32 @@ variables:
 
 stages:
   - check-format
-  - setup-apt-repo
   - test
   - test-windows
   - build
   - test_package
-  - deploy
-  - cleanup
 
-.setup-apt-repo: &setup-apt-repo |
-  echo -e "\ndeb [trusted=yes] file:$(pwd)/apt-repo ./\n" >> /etc/apt/sources.list
+.setup-apt-packages: &setup-apt-packages |
+  wget -O - https://download.grammatech.com/gtirb/files/apt-repo/conf/apt.gpg.key | apt-key add -
+  echo "deb https://download.grammatech.com/gtirb/files/apt-repo bionic stable" | tee -a /etc/apt/sources.list
+  apt-get update -y
+  apt-get install -y libgtirb-dev gtirb-pprinter ddisasm
+
 
 .setup-packages: &setup-packages |
-  python3 -m pip install dataclasses networkx
-  python3 -m pip install gtirb --index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/565/packages/pypi/simple
-  python3 -m pip install gtirb-capstone --index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1350/packages/pypi/simple
-  python3 -m pip install gtirb-functions --index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1349/packages/pypi/simple
-  echo -e "\ndeb [trusted=yes] file:$(pwd)/apt-repo ./\n" >> /etc/apt/sources.list
-  apt-get update -y && apt-get install -y --allow-unauthenticated gtirb-pprinter ddisasm
-
+  python3 -m pip install dataclasses networkx gtirb gtirb-capstone gtirb-functions
 
 default:
   tags: ['kubernetes']
-  image: $DOCKER_REGISTRY/$CI_PROJECT_PATH
+  image: $DOCKER_REGISTRY/$CI_PROJECT_PATH:master
 
 check-format:
   stage: check-format
   script:
     - pre-commit run --all-files
 
-setup-apt-repo:
-  stage: setup-apt-repo
-  artifacts:
-    name: "$CI_COMMIT_REF_NAME-$CI_JOB_NAME"
-    paths:
-      - apt-repo
-  script:
-    - mkdir apt-repo
-    - cd apt-repo
-    - curl -L https://git.grammatech.com/rewriting/gtirb/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 --output "gtirb-ubuntu18-artifacts.zip"
-    - unzip gtirb-ubuntu18-artifacts.zip
-    - curl -L https://git.grammatech.com/rewriting/gtirb-pprinter/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 --output "gtirb-pprinter-ubuntu18-artifacts.zip"
-    - unzip gtirb-pprinter-ubuntu18-artifacts.zip
-    - curl -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/master/download?job=debian-installer-ubuntu18 --output "ddisasm-ubuntu18-artifacts.zip"
-    - unzip ddisasm-ubuntu18-artifacts.zip
-    - dpkg-scanpackages . /dev/null > Packages
-
 test-python:
   stage: test
-  needs: ['setup-apt-repo']
   # We upload tests/factorial so that test-python-windows can try to stack
   # stamp an ELF binary, and we can't generate an ELF binary on Windows.
   artifacts:
@@ -61,6 +38,7 @@ test-python:
       - tests/factorial
   script:
     - *setup-packages
+    - *setup-apt-packages
     - python3 setup.py test
 
 test-python-windows:
@@ -107,10 +85,8 @@ test-python-windows:
 
 test-cpp:
   stage: test
-  needs: ['setup-apt-repo']
   script:
-    - *setup-apt-repo
-    - apt-get update -y && apt-get install -y libgtirb-dev ddisasm gtirb-pprinter
+    - *setup-apt-packages
     - cmake ./ -Bbuild -DCMAKE_BUILD_TYPE=Debug
     - cd build
     - make -j8
@@ -119,13 +95,13 @@ test-cpp:
 
 build:
   stage: build
-  needs: ['setup-apt-repo']
   artifacts:
     paths:
     - dist/gtirb_stack_stamp-?.?.?-py3-none-any.whl
     expire_in: 1 weeks
   script:
     - *setup-packages
+    - *setup-apt-packages
     - python3 setup.py sdist bdist_wheel
 
 test_package:
@@ -134,22 +110,5 @@ test_package:
   stage: test_package
   script:
     - *setup-packages
+    - *setup-apt-packages
     - for f in dist/*.whl; do python3 -m pip install $f; done
-
-internal-pypi:
-  stage: deploy
-  needs: [setup-apt-repo]
-  only:
-    - master
-  script:
-    - pip3 install twine wheel setuptools --upgrade
-    - rm -rf build dist *.egg-info
-    - python3 setup.py sdist bdist_wheel
-    - twine check dist/*
-    - echo 0 > exitcode.txt
-    - (twine upload --verbose --repository-url $CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/pypi --username gitlab-ci-token --password "$CI_JOB_TOKEN" dist/* | tee response.txt) || (echo $? > exitcode.txt; exit 0)
-    # do not fail if we try to re-upload a package of the same version
-    - if [[ "$(cat exitcode.txt)" != 0 && -z "$(cat response.txt | grep "File name has already been taken")" ]];
-      then
-        exit 1;
-      fi

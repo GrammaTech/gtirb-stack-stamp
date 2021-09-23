@@ -1,5 +1,7 @@
 FROM ubuntu:18.04
 
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 # Setup formatting
 RUN apt-get update -y && apt-get install -y clang-format curl elpa-paredit \
@@ -18,29 +20,16 @@ RUN pre-commit install-hooks
 WORKDIR /
 RUN rm -rf /gt/
 
-
 # Setup build
 RUN apt-get install -y build-essential cmake \
         libprotobuf-dev make pkg-config \
         software-properties-common unzip wget
 RUN python3 -m pip install --upgrade setuptools wheel
 
-# Install Boost
+# Setup boost installation
 ARG BOOST_VERSION=1.67
-RUN add-apt-repository ppa:mhier/libboost-latest && \
-    apt-get -y update && \
-    apt-get -y install libboost${BOOST_VERSION}-dev
-
-# Install Capstone
-WORKDIR /gt/apt-repo
-COPY libcapstone-dev_*_amd64.deb /gt/apt-repo/
-RUN dpkg-scanpackages . /dev/null > Packages
-RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak
-RUN printf "\ndeb [trusted=yes] file:$(pwd) ./\n" >> /etc/apt/sources.list
-RUN apt-get update -y && apt-get install -y libcapstone-dev
-RUN mv /etc/apt/sources.list.bak /etc/apt/sources.list
-WORKDIR /
-RUN rm -rf /gt/apt-repo
+RUN add-apt-repository ppa:mhier/libboost-latest
+RUN apt-get update -y
 
 # Install Keystone
 RUN git clone https://github.com/keystone-engine/keystone.git
