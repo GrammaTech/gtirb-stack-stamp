@@ -66,9 +66,8 @@ def main():
         args_pp = [
             "gtirb-pprinter",
             args.outfile,
-            "--keep-all",
-            "--skip-section",
-            ".eh_frame",
+            "--policy",
+            "complete",
             "-b",
             args.rebuild,
             "-c",
