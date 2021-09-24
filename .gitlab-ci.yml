@@ -53,27 +53,17 @@ test-python-windows:
     GTIRB_FUNCTIONS_BRANCH: master
   needs: ['test-python']
   script:
-    # Install gtirb-pprinter
-    - curl -L https://git.grammatech.com/rewriting/gtirb-pprinter/-/jobs/artifacts/${GTIRB_PPRINTER_BRANCH}/download?job=build-windows-msvc-relwithdebinfo --output "gtirb-pprinter-artifacts.zip"
-    # Below, unzip doesn't work: the unzipped binary will not execute because
-    # of a permissions error.  If you give it the correct permissions it just
-    # silently fails on the command line.  This is happening because the zip
-    # file is 'blocked'.  The powershell cmdlet Expand-Archive will unzip a
-    # runnable, 'unblocked' binary.
-    - powershell -Command '$global:ProgressPreference = "SilentlyContinue"; Expand-Archive gtirb-pprinter-artifacts.zip'
-    - cp -r gtirb-pprinter-artifacts/gtirb_pprinter-*-win64 ./
-    # Install ddisasm
-    - curl -L https://git.grammatech.com/rewriting/ddisasm/-/jobs/artifacts/${DDISASM_BRANCH}/download?job=build-windows-msvc-relwithdebinfo --output "ddisasm-artifacts.zip"
-    - powershell -Command '$global:ProgressPreference = "SilentlyContinue"; Expand-Archive ddisasm-artifacts.zip'
-    - cp -r ddisasm-artifacts/DDISASM-*-win64 ./
+    # Install conan packages
+    - conan profile new default --detect
+    - export CONAN_LOGIN_USERNAME=ci_user CONAN_PASSWORD=${CI_JOB_TOKEN}
+    - conan remote add gitlab https://git.grammatech.com/api/v4/packages/conan
+    - conan install ddisasm/1.5.0@rewriting+ddisasm/stable -g deploy
+    - mkdir tools
+    - cp -R capstone/* gtirb/* gtirb-pprinter/* ddisasm/* tools
     # Install gtirb & helper libraries
-    - python --version
-    - python -m pip install --upgrade pip && python -m pip install networkx 'protobuf<3.12.2' keystone-engine capstone
-    - python -m pip install gtirb --index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/565/packages/pypi/simple
-    - python -m pip install gtirb-capstone --index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1350/packages/pypi/simple
-    - python -m pip install gtirb-functions --index-url https://__token__:$CI_JOB_TOKEN@git.grammatech.com/api/v4/projects/1349/packages/pypi/simple
+    - python -m pip install gtirb gtirb-capstone gtirb-functions
     # Run the test
-    - PATH="$PATH;$(cygpath -w $(pwd)/DDISASM-*-win64/bin);$(cygpath -w $(pwd)/gtirb_pprinter-*-win64/bin)" cmd.exe /C "C:\\VS\\VC\\Auxiliary\\Build\\vcvars64.bat && python setup.py test"
+    - PATH="$PATH;$(cygpath -w $(pwd)/tools/bin)" cmd.exe /C "C:\\VS\\VC\\Auxiliary\\Build\\vcvars64.bat && python setup.py test"
 
 # test-common-lisp:
 #   stage: test
