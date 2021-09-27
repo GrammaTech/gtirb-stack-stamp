@@ -27,7 +27,6 @@ RUN apt-get install -y build-essential cmake \
 RUN python3 -m pip install --upgrade setuptools wheel
 
 # Setup boost installation
-ARG BOOST_VERSION=1.67
 RUN add-apt-repository ppa:mhier/libboost-latest
 RUN apt-get update -y
 
