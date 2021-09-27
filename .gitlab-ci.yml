@@ -10,11 +10,8 @@ stages:
   - test_package
 
 .setup-apt-packages: &setup-apt-packages |
-  wget -O - https://download.grammatech.com/gtirb/files/apt-repo/conf/apt.gpg.key | apt-key add -
-  echo "deb https://download.grammatech.com/gtirb/files/apt-repo bionic stable" | tee -a /etc/apt/sources.list
   apt-get update -y
   apt-get install -y libgtirb-dev gtirb-pprinter ddisasm
-
 
 .setup-packages: &setup-packages |
   python3 -m pip install dataclasses networkx gtirb gtirb-capstone gtirb-functions

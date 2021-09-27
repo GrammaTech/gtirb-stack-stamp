@@ -26,8 +26,12 @@ RUN apt-get install -y build-essential cmake \
         software-properties-common unzip wget
 RUN python3 -m pip install --upgrade setuptools wheel
 
-# Setup boost installation
+# Setup apt repositories
 RUN add-apt-repository ppa:mhier/libboost-latest
+RUN wget -O - https://download.grammatech.com/gtirb/files/apt-repo/conf/apt.gpg.key | apt-key add -
+# We have to use the stable repository because pypi can only contain stable
+# releases of gtirb.
+RUN echo "deb https://download.grammatech.com/gtirb/files/apt-repo bionic stable" | tee -a /etc/apt/sources.list
 RUN apt-get update -y
 
 # Install Keystone
