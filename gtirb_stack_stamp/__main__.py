@@ -70,8 +70,6 @@ def main():
             "complete",
             "-b",
             args.rebuild,
-            "-c",
-            "-nostartfiles",
         ]
         ec = subprocess.call(args_pp)
         return ec
