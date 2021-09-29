@@ -29,14 +29,23 @@ class StampPass(Pass):
 
     def begin_module(self, module, functions, context):
         """Register insertions and replacements for the given functions."""
+        # When _start runs, there is no return address on the stack, so we
+        # shouldn't stamp it.
+        functions = set(functions) - {"_start"}
         # Stamp the return address at the entry point of every function.
         context.register_insert(
-            AllFunctionsScope(FunctionPosition.ENTRY, BlockPosition.ENTRY),
+            AllFunctionsScope(
+                FunctionPosition.ENTRY,
+                BlockPosition.ENTRY,
+                functions=functions,
+            ),
             Patch.from_function(self.get_function_stamp_value),
         )
         # Stamp the return address at the exit of every function.
         context.register_insert(
-            AllFunctionsScope(FunctionPosition.EXIT, BlockPosition.EXIT),
+            AllFunctionsScope(
+                FunctionPosition.EXIT, BlockPosition.EXIT, functions=functions
+            ),
             Patch.from_function(self.get_function_stamp_value),
         )
 
