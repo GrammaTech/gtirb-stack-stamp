@@ -14,8 +14,7 @@ stages:
   apt-get install -y libgtirb-dev gtirb-pprinter ddisasm
 
 .setup-packages: &setup-packages |
-  python3 -m pip install --upgrade pip
-  python3 -m pip install dataclasses networkx gtirb gtirb-capstone gtirb-functions
+  python3 -m pip install gtirb gtirb-capstone gtirb-functions
 
 default:
   tags: ['kubernetes']
@@ -97,5 +96,4 @@ test_package:
     GIT_STRATEGY: none
   stage: test_package
   script:
-    - python3 -m pip install --upgrade pip
     - for f in dist/*.whl; do python3 -m pip install $f; done

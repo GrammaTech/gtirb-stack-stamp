@@ -47,7 +47,7 @@ RUN cd keystone && \
 RUN ldconfig /usr/local/lib
 
 # Install Python packages
-RUN pip3 install capstone keystone-engine networkx protobuf
+RUN python3 -m pip install --upgrade pip
 
 # Common Lisp Setup
 RUN apt-get install -y sbcl
