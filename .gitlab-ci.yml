@@ -97,4 +97,5 @@ test_package:
     GIT_STRATEGY: none
   stage: test_package
   script:
+    - python3 -m pip install --upgrade pip
     - for f in dist/*.whl; do python3 -m pip install $f; done
