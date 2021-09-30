@@ -32,7 +32,7 @@ test-python:
   artifacts:
     name: "$CI_COMMIT_REF_NAME-$CI_JOB_NAME"
     paths:
-      - tests/factorial
+      - tests/*
   script:
     - *setup-packages
     - *setup-apt-packages
