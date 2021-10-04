@@ -23,24 +23,25 @@ class StackStampTest(unittest.TestCase):
             try:
                 yield path
             finally:
-                os.remove(path)
+                if os.path.exists(path):
+                    os.remove(path)
 
         es = contextlib.ExitStack()
         try:
             if platform.system() == "Linux":
                 args = ["make", binary, "-B"]
+                es.enter_context(temp_file(binary))
                 ec = subprocess.call(args)
                 self.assertEqual(ec, 0)
-                es.enter_context(temp_file(binary))
 
             gtirb = f"{binary}.gtirb"
             stamped_gtirb = f"{binary}.gtirb.stamp"
             stamped = f"{binary}.stamp"
 
             args = [self._ddisasm, binary, "--ir", gtirb]
+            es.enter_context(temp_file(gtirb))
             ec = subprocess.call(args)
             self.assertEqual(ec, 0)
-            es.enter_context(temp_file(gtirb))
 
             if platform.system() == "Linux":
                 python = "python3"
@@ -59,10 +60,10 @@ class StackStampTest(unittest.TestCase):
             # only do that part of the test on linux
             if platform.system() == "Linux":
                 args += ["--rebuild", stamped]
+                es.enter_context(temp_file(stamped))
+            es.enter_context(temp_file(stamped_gtirb))
             ec = subprocess.call(args)
             self.assertEqual(ec, 0)
-            es.enter_context(temp_file(stamped_gtirb))
-            es.enter_context(temp_file(stamped))
             yield stamped
         finally:
             es.close()
