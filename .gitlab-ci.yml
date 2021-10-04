@@ -37,6 +37,8 @@ test-python:
     - *setup-packages
     - *setup-apt-packages
     - python3 setup.py test
+    - cd tests
+    - make factorial -B
 
 test-python-windows:
   stage: test-windows

@@ -27,10 +27,11 @@ class StackStampTest(unittest.TestCase):
 
         es = contextlib.ExitStack()
         try:
-            args = ["make", binary, "-B"]
-            ec = subprocess.call(args)
-            self.assertEqual(ec, 0)
-            es.enter_context(temp_file(binary))
+            if platform.system() == "Linux":
+                args = ["make", binary, "-B"]
+                ec = subprocess.call(args)
+                self.assertEqual(ec, 0)
+                es.enter_context(temp_file(binary))
 
             gtirb = f"{binary}.gtirb"
             stamped_gtirb = f"{binary}.gtirb.stamp"
