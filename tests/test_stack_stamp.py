@@ -99,3 +99,7 @@ class StackStampTest(unittest.TestCase):
                 ).stdout.decode("utf-8")
                 self.assertIn("Function A", stamped_output)
                 self.assertNotIn("Function B", stamped_output)
+                args = [f"./{stamped}", "dont overwrite"]
+                output = subprocess.check_output(args)
+                self.assertIn("Function A", stamped_output)
+                self.assertNotIn("Function B", stamped_output)

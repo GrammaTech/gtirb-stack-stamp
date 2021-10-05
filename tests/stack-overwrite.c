@@ -2,11 +2,12 @@
 
 void B() asm("function_B");
 
-void A() {
+void A(int flag) {
   printf("Function A\n");
   fflush(NULL);
-  __asm__("lea function_B(%rip), %rax\n\t"
-          "mov %rax, 8(%rbp)\n\t");
+  if (flag) {
+    ((void**)__builtin_frame_address(0))[1] = &B;
+  }
 }
 
 void B() {
@@ -14,4 +15,4 @@ void B() {
   fflush(NULL);
 }
 
-int main(int argc, char** argv) { A(); }
+int main(int argc, char** argv) { A(argc > 1 ? 0 : 1); }
