@@ -43,9 +43,13 @@ class StackStampTest(unittest.TestCase):
             def __exit__(self, type, value, traceback):
                 shutil.rmtree(self.dir)
 
-        es = contextlib.ExitStack()
-        tempdir = es.enter_context(TempDir(binary))
-        try:
+        with contextlib.ExitStack() as es:
+            tempdir = es.enter_context(TempDir(binary))
+            if KEEP_TEMP_FILES:
+                es.pop_all()
+                msg = "KEEP_TEMP_FILES is preserving test directory: "
+                es.callback(lambda: print(msg, tempdir))
+
             if platform.system() == "Linux":
                 shutil.copy(source, os.path.join(tempdir, source))
                 args = ["make", binary, "-B"]
@@ -78,13 +82,6 @@ class StackStampTest(unittest.TestCase):
             ec = subprocess.call(args, cwd=tempdir)
             self.assertEqual(ec, 0)
             yield (os.path.join(tempdir, file) for file in (binary, stamped))
-        finally:
-            if KEEP_TEMP_FILES:
-                print(
-                    "KEEP_TEMP_FILES is preserving test directory: " + tempdir
-                )
-                es.pop_all()
-            es.close()
 
     def test_1_invocation(self):
         with self.do_stamp("factorial.c") as (binary, stamped):
