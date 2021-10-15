@@ -98,20 +98,19 @@ class StackStampTest(unittest.TestCase):
     )
     def test_stamp(self):
         with self.do_stamp("stack-overwrite.c") as (binary, stamped):
-            if platform.system() == "Linux":
-                args = [binary]
-                output = subprocess.run(
-                    args, stdout=subprocess.PIPE
-                ).stdout.decode("utf-8")
-                self.assertIn("Function A", output)
-                self.assertIn("Function B", output)
-                args = [stamped]
-                stamped_output = subprocess.run(
-                    args, stdout=subprocess.PIPE
-                ).stdout.decode("utf-8")
-                self.assertIn("Function A", stamped_output)
-                self.assertNotIn("Function B", stamped_output)
-                args = [stamped, "dont overwrite"]
-                output = subprocess.check_output(args)
-                self.assertIn("Function A", stamped_output)
-                self.assertNotIn("Function B", stamped_output)
+            args = [binary]
+            output = subprocess.run(
+                args, stdout=subprocess.PIPE
+            ).stdout.decode("utf-8")
+            self.assertIn("Function A", output)
+            self.assertIn("Function B", output)
+            args = [stamped]
+            stamped_output = subprocess.run(
+                args, stdout=subprocess.PIPE
+            ).stdout.decode("utf-8")
+            self.assertIn("Function A", stamped_output)
+            self.assertNotIn("Function B", stamped_output)
+            args = [stamped, "dont overwrite"]
+            output = subprocess.check_output(args)
+            self.assertIn("Function A", stamped_output)
+            self.assertNotIn("Function B", stamped_output)
