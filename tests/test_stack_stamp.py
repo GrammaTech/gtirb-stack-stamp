@@ -46,11 +46,13 @@ class StackStampTest(unittest.TestCase):
         es = contextlib.ExitStack()
         tempdir = es.enter_context(TempDir(binary))
         try:
-            shutil.copy(source, os.path.join(tempdir, source))
             if platform.system() == "Linux":
+                shutil.copy(source, os.path.join(tempdir, source))
                 args = ["make", binary, "-B"]
                 ec = subprocess.call(args, cwd=tempdir)
                 self.assertEqual(ec, 0)
+            elif platform.system() == "Windows":
+                shutil.copy(binary, os.path.join(tempdir, binary))
 
             args = [self._ddisasm, binary, "--ir", gtirb]
             ec = subprocess.call(args, cwd=tempdir)
