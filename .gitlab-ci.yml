@@ -14,7 +14,7 @@ stages:
   apt-get install -y libgtirb-dev gtirb-pprinter ddisasm
 
 .setup-packages: &setup-packages |
-  python3 -m pip install gtirb gtirb-capstone gtirb-functions
+  python3 -m pip install -e .
 
 default:
   tags: ['kubernetes']

@@ -18,7 +18,7 @@ if __name__ == "__main__":
         package_data={"gtirb_stack_stamp": ["gtirb_stack_stamp/*.py"]},
         packages=find_packages(),
         test_suite="setup.gtirb_stack_stamp_test_suite",
-        install_requires=["gtirb", "gtirb-rewriting", "pyyaml"],
+        install_requires=["gtirb", "gtirb-rewriting"],
         classifiers=["Programming Language :: Python :: 3"],
         entry_points={
             "console_scripts": [
