@@ -94,10 +94,7 @@ class StackStampTest(unittest.TestCase):
 
     @unittest.skipUnless(
         platform.system() == "Linux",
-        (
-            "The test binary can't run on Windows, and test_1_invocation "
-            "already tests that the stamp itself runs on Windows."
-        ),
+        ("The test binary can't run on Windows."),
     )
     def test_stamp(self):
         with self.do_stamp("stack-overwrite.c") as (binary, stamped):
