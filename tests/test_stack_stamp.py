@@ -3,6 +3,12 @@ import subprocess
 import os
 import platform
 import contextlib
+import tempfile
+import shutil
+
+# You can use the KEEP_TEMP_FILES environment variable to tell the tests not to
+# clean up after themselves, which can help with debugging.
+KEEP_TEMP_FILES = os.getenv("KEEP_TEMP_FILES", "") != ""
 
 
 class StackStampTest(unittest.TestCase):
@@ -17,30 +23,37 @@ class StackStampTest(unittest.TestCase):
             self._ddisasm = "ddisasm.exe"
 
     @contextlib.contextmanager
-    def do_stamp(self, binary):
-        @contextlib.contextmanager
-        def temp_file(path):
-            try:
-                yield path
-            finally:
-                if os.path.exists(path):
-                    os.remove(path)
+    def do_stamp(self, source):
+        base = os.path.basename(source)
+        binary = os.path.splitext(base)[0]
+        gtirb = f"{binary}.gtirb"
+        stamped_gtirb = f"{binary}.gtirb.stamp"
+        stamped = f"{binary}.stamp"
+
+        class TempDir:
+            def __init__(self, prefix):
+                self.prefix = prefix
+
+            def __enter__(self):
+                self.dir = tempfile.mkdtemp(
+                    prefix=self.prefix + "-tmp-", dir=os.getcwd()
+                )
+                return self.dir
+
+            def __exit__(self, type, value, traceback):
+                shutil.rmtree(self.dir)
 
         es = contextlib.ExitStack()
+        tempdir = es.enter_context(TempDir(binary))
         try:
+            shutil.copy(source, os.path.join(tempdir, source))
             if platform.system() == "Linux":
                 args = ["make", binary, "-B"]
-                es.enter_context(temp_file(binary))
-                ec = subprocess.call(args)
+                ec = subprocess.call(args, cwd=tempdir)
                 self.assertEqual(ec, 0)
 
-            gtirb = f"{binary}.gtirb"
-            stamped_gtirb = f"{binary}.gtirb.stamp"
-            stamped = f"{binary}.stamp"
-
             args = [self._ddisasm, binary, "--ir", gtirb]
-            es.enter_context(temp_file(gtirb))
-            ec = subprocess.call(args)
+            ec = subprocess.call(args, cwd=tempdir)
             self.assertEqual(ec, 0)
 
             if platform.system() == "Linux":
@@ -60,18 +73,21 @@ class StackStampTest(unittest.TestCase):
             # only do that part of the test on linux
             if platform.system() == "Linux":
                 args += ["--rebuild", stamped]
-                es.enter_context(temp_file(stamped))
-            es.enter_context(temp_file(stamped_gtirb))
-            ec = subprocess.call(args)
+            ec = subprocess.call(args, cwd=tempdir)
             self.assertEqual(ec, 0)
-            yield stamped
+            yield (os.path.join(tempdir, file) for file in (binary, stamped))
         finally:
+            if KEEP_TEMP_FILES:
+                print(
+                    "KEEP_TEMP_FILES is preserving test directory: " + tempdir
+                )
+                es.pop_all()
             es.close()
 
     def test_1_invocation(self):
-        with self.do_stamp("factorial") as stamped:
+        with self.do_stamp("factorial.c") as (binary, stamped):
             if platform.system() == "Linux":
-                args = [f"./{stamped}", "10"]
+                args = [stamped, "10"]
                 output = subprocess.check_output(args)
                 self.assertEqual(output, b"Factorial(10)=3628800\n")
         return True
@@ -84,22 +100,21 @@ class StackStampTest(unittest.TestCase):
         ),
     )
     def test_stamp(self):
-        binary = "stack-overwrite"
-        with self.do_stamp(binary) as stamped:
+        with self.do_stamp("stack-overwrite.c") as (binary, stamped):
             if platform.system() == "Linux":
-                args = [f"./{binary}"]
+                args = [binary]
                 output = subprocess.run(
                     args, stdout=subprocess.PIPE
                 ).stdout.decode("utf-8")
                 self.assertIn("Function A", output)
                 self.assertIn("Function B", output)
-                args = [f"./{stamped}"]
+                args = [stamped]
                 stamped_output = subprocess.run(
                     args, stdout=subprocess.PIPE
                 ).stdout.decode("utf-8")
                 self.assertIn("Function A", stamped_output)
                 self.assertNotIn("Function B", stamped_output)
-                args = [f"./{stamped}", "dont overwrite"]
+                args = [stamped, "dont overwrite"]
                 output = subprocess.check_output(args)
                 self.assertIn("Function A", stamped_output)
                 self.assertNotIn("Function B", stamped_output)
