@@ -98,19 +98,18 @@ class StackStampTest(unittest.TestCase):
     )
     def test_stamp(self):
         with self.do_stamp("stack-overwrite.c") as (binary, stamped):
-            args = [binary]
-            output = subprocess.run(
-                args, stdout=subprocess.PIPE
-            ).stdout.decode("utf-8")
-            self.assertIn("Function A", output)
-            self.assertIn("Function B", output)
-            args = [stamped]
+            # Check that the stamped program's behavior is unchanged when we
+            # don't overwrite the return address
+            self.assertEqual(
+                subprocess.check_output([binary, "don't overwrite"]),
+                subprocess.check_output([stamped, "don't overwrite"]),
+            )
+            # Check that stamping blocks return address overwrites
+            unstamped_output = subprocess.run(
+                [binary], stdout=subprocess.PIPE
+            ).stdout
             stamped_output = subprocess.run(
-                args, stdout=subprocess.PIPE
-            ).stdout.decode("utf-8")
-            self.assertIn("Function A", stamped_output)
-            self.assertNotIn("Function B", stamped_output)
-            args = [stamped, "dont overwrite"]
-            output = subprocess.check_output(args)
-            self.assertIn("Function A", stamped_output)
-            self.assertNotIn("Function B", stamped_output)
+                [stamped], stdout=subprocess.PIPE
+            ).stdout
+            self.assertTrue(unstamped_output.startswith(stamped_output))
+            self.assertNotEqual(unstamped_output, stamped_output)
