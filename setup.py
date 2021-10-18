@@ -1,5 +1,9 @@
 from setuptools import setup, find_packages
+from imp import load_source
 import unittest
+
+pkginfo = load_source("pkginfo.version", "gtirb_stack_stamp/version.py")
+__version__ = pkginfo.__version__
 
 
 def gtirb_stack_stamp_test_suite():
@@ -11,7 +15,7 @@ def gtirb_stack_stamp_test_suite():
 if __name__ == "__main__":
     setup(
         name="gtirb-stack-stamp",
-        version="0.1.0",
+        version=__version__,
         author="Grammatech",
         author_email="gtirb@grammatech.com",
         description="Apply a stack-stamp transform to GTIRB",
