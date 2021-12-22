@@ -54,6 +54,7 @@ test-python-windows:
   needs: ['test-python']
   script:
     # Install conan packages
+    - pip3 install --upgrade conan
     - conan profile new default --detect
     - export CONAN_LOGIN_USERNAME=ci_user CONAN_PASSWORD=${CI_JOB_TOKEN}
     - conan remote add gitlab https://git.grammatech.com/api/v4/packages/conan
