@@ -44,7 +44,7 @@ test-python:
 test-python-windows:
   stage: test-windows
   tags:
-    - windows-gtirb-stack-stamp
+    - rewriting-windows
   variables:
     GTIRB_BRANCH: master
     GTIRB_PPRINTER_BRANCH: master
