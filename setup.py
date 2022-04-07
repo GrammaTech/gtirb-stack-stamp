@@ -27,6 +27,9 @@ if __name__ == "__main__":
         entry_points={
             "console_scripts": [
                 "gtirb-stack-stamp = gtirb_stack_stamp.__main__:main"
-            ]
+            ],
+            "gtirb_rewriting": [
+                "stack-stamp = gtirb_stack_stamp.stack_stamp:StampPass",
+            ],
         },
     )
