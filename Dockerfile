@@ -1,7 +1,8 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Setup formatting
 RUN apt-get update -y && apt-get install -y clang-format curl elpa-paredit \
@@ -22,16 +23,16 @@ RUN rm -rf /gt/
 
 # Setup build
 RUN apt-get install -y build-essential cmake \
-        libprotobuf-dev make pkg-config \
-        software-properties-common unzip wget
+    libprotobuf-dev libboost-program-options1.71-dev \
+    libboost-filesystem1.71-dev libboost-system1.71-dev make pkg-config \
+    software-properties-common unzip wget
 RUN python3 -m pip install --upgrade setuptools wheel
 
 # Setup apt repositories
-RUN add-apt-repository ppa:mhier/libboost-latest
 RUN wget -O - https://download.grammatech.com/gtirb/files/apt-repo/conf/apt.gpg.key | apt-key add -
 # We have to use the stable repository because pypi can only contain stable
 # releases of gtirb.
-RUN echo "deb https://download.grammatech.com/gtirb/files/apt-repo bionic stable" | tee -a /etc/apt/sources.list
+RUN echo "deb https://download.grammatech.com/gtirb/files/apt-repo $(lsb_release -sc) stable" | tee -a /etc/apt/sources.list
 RUN apt-get update -y
 
 # Install Keystone

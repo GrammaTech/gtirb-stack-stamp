@@ -48,8 +48,8 @@ class StampPass(Pass):
         # Use the same seed every time this is called for the same function so
         # that each entrance and exit uses the same stamp.
         random.seed(context.function.uuid.int)
-        w1 = random.randint(0, 2 ** 32)
-        w2 = random.randint(0, 2 ** 32)
+        w1 = random.randint(0, 2**32)
+        w2 = random.randint(0, 2**32)
         return f"""
             xorl $0x{w1:X},{context.stack_adjustment}(%rsp)
             xorl $0x{w2:X},{context.stack_adjustment+4}(%rsp)
