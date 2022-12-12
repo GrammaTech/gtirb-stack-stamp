@@ -58,7 +58,7 @@ test-python-windows:
     - conan profile new default --detect
     - export CONAN_LOGIN_USERNAME=ci_user CONAN_PASSWORD=${CI_JOB_TOKEN}
     - conan remote add gitlab https://git.grammatech.com/api/v4/packages/conan
-    - conan install ddisasm/1.5.1@rewriting+ddisasm/stable -g deploy
+    - conan install ddisasm/dev@rewriting+ddisasm/main -g deploy
     - mkdir tools
     - cp -R capstone/* gtirb/* gtirb-pprinter/* ddisasm/* tools
     # Install gtirb & helper libraries
