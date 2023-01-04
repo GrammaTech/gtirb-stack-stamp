@@ -18,7 +18,7 @@ stages:
   python3 -m pip install -e .
 
 default:
-  tags: ['kubernetes']
+  tags: ['shared']
   image: $DOCKER_REGISTRY/$CI_PROJECT_PATH:master
 
 check-format:
