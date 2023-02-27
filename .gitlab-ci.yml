@@ -1,6 +1,7 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_STRATEGY: clone
+  CONAN_VERSION: "1.59"
 
 stages:
   - check-format
@@ -54,7 +55,7 @@ test-python-windows:
   needs: ['test-python']
   script:
     # Install conan packages
-    - pip3 install --upgrade conan
+    - pip3 install --upgrade conan~=$CONAN_VERSION
     - conan profile new default --detect
     - export CONAN_LOGIN_USERNAME=ci_user CONAN_PASSWORD=${CI_JOB_TOKEN}
     - conan remote add gitlab https://git.grammatech.com/api/v4/packages/conan
