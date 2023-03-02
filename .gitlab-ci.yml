@@ -46,12 +46,6 @@ test-python-windows:
   stage: test-windows
   tags:
     - rewriting-windows
-  variables:
-    GTIRB_BRANCH: master
-    GTIRB_PPRINTER_BRANCH: master
-    DDISASM_BRANCH: master
-    GTIRB_CAPSTONE_BRANCH: master
-    GTIRB_FUNCTIONS_BRANCH: master
   needs: ['test-python']
   script:
     # Install conan packages
@@ -63,7 +57,10 @@ test-python-windows:
     - mkdir tools
     - cp -R capstone/* gtirb/* gtirb-pprinter/* ddisasm/* tools
     # Install gtirb & helper libraries
-    - python -m pip install gtirb gtirb-capstone gtirb-functions
+    - python -m pip install https://download.grammatech.com/gtirb/files/python/gtirb-unstable-py3-none-any.whl
+    - python -m pip install git+https://github.com/GrammaTech/gtirb-functions.git
+    - python -m pip install git+https://github.com/GrammaTech/gtirb-capstone.git
+    - python -m pip install git+https://github.com/GrammaTech/gtirb-rewriting.git
     # Run the test
     - PATH="$PATH;$(cygpath -w $(pwd)/tools/bin)" cmd.exe /C "C:\\VS\\VC\\Auxiliary\\Build\\vcvars64.bat && python setup.py test"
 
